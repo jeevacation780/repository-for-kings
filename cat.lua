@@ -1,5 +1,9 @@
 -- Date: 31/12/2025
 
+if isfile("megasakenautoload.txt") then
+		game.Players.LocalPlayer:Kick("Clear your workspace of anything related to 'MegaSaken' and then try again.")
+end
+
 -- patcher
 function deepcopy(t)
     if type(t) ~= "table" then return t end
