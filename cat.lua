@@ -160,7 +160,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 -- entire gui module
 local SaveFileName = (isfile("catsakenautoload.txt") and readfile("catsakenautoload.txt")) or ("catsaken-default-" .. LocalPlayer.Name .. ".json")
 local SaveTable = {}
-local IsMobile = true--UserInputService.TouchEnabled == true and UserInputService.KeyboardEnabled == false
+local IsMobile = UserInputService.TouchEnabled == true and UserInputService.KeyboardEnabled == false
 function randomstring(l)
     local str = ""
     local chars = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"):split("")
