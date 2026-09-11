@@ -1,9 +1,5 @@
 -- Date: 31/12/2025
 
-if isfile("megasakenautoload.txt") then
-		game.Players.LocalPlayer:Kick("Clear your workspace of anything related to 'MegaSaken' and then try again.")
-end
-
 -- patcher
 function deepcopy(t)
     if type(t) ~= "table" then return t end
@@ -287,7 +283,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
     local function addCustomScrollbar(Frame)
         Frame.ScrollBarThickness = 0
 
-        local Track = Instance.new("Frame")
+        local Track = Instance.new("TextButton")
         Track.Name = "CustomScrollTrack"
         Track.Parent = Frame.Parent
         Track.AnchorPoint = Vector2.new(1, 0)
@@ -295,6 +291,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
         Track.BackgroundTransparency = 0.450
         Track.BorderSizePixel = 0
         Track.ZIndex = Frame.ZIndex + 1
+        Track.Text = ""
 
         local Bar = Instance.new("Frame")
         Bar.Name = "Bar"
@@ -867,6 +864,8 @@ local mainuimodule = not ShouldUseOldUI and (function()
         uilibrary.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         uilibrary.ResetOnSpawn = false
         uilibrary.Enabled = false
+        uilibrary.OnTopOfCoreBlur = true
+        uilibrary.DisplayOrder = (2^31)-1
         _G.globaluilibrary = uilibrary
 
         UserInputService.InputBegan:Connect(function(k,Gpe)
@@ -1162,18 +1161,18 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 sf.ScrollingDirection = Enum.ScrollingDirection.Y
                 sf.ClipsDescendants = true
                 if IsMobile then
-                    sf.ScrollingEnabled = false
+                    --sf.ScrollingEnabled = false
                 end
                 SmoothScroll.Enable(sf, 4, 0.9)
             end
 
             LeftScrolling.Position = UDim2.new(0, 0, 0, 28)
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 6)
+            padding.Parent = LeftScrolling
             if IsMobile or _G.SINGLE_COLUMNS then
                 LeftScrolling.Size = UDim2.new(1, 0, 1, -28)
                 RightScrolling.Visible = false
-                local padding = Instance.new("UIPadding")
-                padding.PaddingLeft = UDim.new(0, 6)
-                padding.Parent = LeftScrolling
             else
                 LeftScrolling.Size = UDim2.new(0.5, -4, 1, -28)
                 RightScrolling.Position = UDim2.new(0.5, 4, 0, 28)
@@ -1583,7 +1582,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 Toggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 Toggle.BorderSizePixel = 0
                 Toggle.AutomaticSize = Enum.AutomaticSize.Y
-                Toggle.Size = UDim2.new(1, -((IsMobile or _G.SINGLE_COLUMNS) and 29 or 10), 0, 32)
+                Toggle.Size = UDim2.new(1, -((IsMobile or _G.SINGLE_COLUMNS) and 29 or 10), 0, 28)
 
                 UIPadding.Parent = Toggle
                 UIPadding.PaddingTop = UDim.new(0, 6)
@@ -3704,12 +3703,16 @@ if ShouldUseOldUI then
     AboutTab:CreateLabel("Since you're using on older GUI with a script made to be built on a new GUI, there may be bugs in this version. Report them if you do catch them.")
 else
     AboutTab:CreateSection('Changelog')
-    AboutTab:CreateLabel([[09/09/2026
+    AboutTab:CreateLabel([[
+11/09/2026
+    • Added a prettier notifications UI
+    • Decreased UI height for mobile users
+    • Added a scrollbar for mobile users
+    • Privacy Bypass
+    • Stun Spy
+09/09/2026
     • Major bug fixes
     • Major improvements to auto-block (Full rework)
-    • Added a scrollbar for mobile users
-    • Decreased UI height for mobile users
-    • Added a prettier notifications UI
     • Azure ESP
     • Auto Disarm Azure Vines
     • Inf Attempts To Disarm Vines
@@ -3719,7 +3722,7 @@ else
     • TP One Shot
     • Auto Chicken
     • Auto Raging Pace
-    08/09/2026
+08/09/2026
     • Updated to the latest patch of forsaken
     • Bug Fixes and QOL Changes
     • Azure Aimbot
@@ -3742,8 +3745,8 @@ local SilentTab = Catsaken:CreateTab('Aimbot', 'crosshair')
 local HitboxTab = Catsaken:CreateTab('Hitboxes', 'sword')
 local ConvenienceTab = Catsaken:CreateTab('Convenience', 'leaf')
 local AutoblockTab = Catsaken:CreateTab('Auto Block', 'shield')
-local PlayerTab = Catsaken:CreateTab('Player', 'user')
-local MapTab = Catsaken:CreateTab('Map', 'map')
+local PlayerTab = Catsaken:CreateTab('Self', 'user')
+local MapTab = Catsaken:CreateTab('Game', 'gamepad-2')
 local AntisTab = Catsaken:CreateTab('Antis', 'ban')
 local MiscTab = Catsaken:CreateTab('Miscallenous', 'dices')
 local ConfigsTab = Catsaken:CreateTab('Configs', 'cog')
@@ -3998,24 +4001,6 @@ function WaitAndReset(Key, Time)
         Forsaken[Key] = false
     end)
 end
-
-local OldNamecall OldNamecall = hookmetamethod(game, '__namecall', function(self, ...)
-    if (Unloaded) then return OldNamecall(self, ...) end
-    if typeof(self) == 'Instance' and tostring(self) == 'RemoteEvent' then
-        local Argument = ({...})[2]
-        if type(Argument) == 'table' and typeof(Argument[1]) == 'buffer' then
-            if buffer.tostring(Argument[1]):find('PlasmaBeam') then
-                WaitAndReset('DusekkarActive')
-            elseif buffer.tostring(Argument[1]):find('Nova') then
-                WaitAndReset('NoliActive')
-            elseif buffer.tostring(Argument[1]):find('CorruptNature') then
-                WaitAndReset('CoolkidActive')
-            end
-        end
-    end
-    return OldNamecall(self, ...)
-end)
-print("[metahooks] Silent aim trackers initialized")
 
 function GetClosestGenerator(ReturnNum)
     local Root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
@@ -4975,6 +4960,7 @@ VisualsTab:CreateColorPicker({
     Flag = 'TaphEspColor',
     Callback = NULL
 })
+
 VisualsTab:CreateColorPicker({
     Name = 'Builderman Color', -- Sentries and healing machines
     Color = Color3.fromRGB(157, 255, 0),
@@ -5753,12 +5739,69 @@ ConvenienceTab:CreateToggle({
 })
 
 ConvenienceTab:CreateToggle({
-    Name = 'Infinite Disarm Attempts',
+    Name = 'Infinite disarm attempts',
     CurrentValue = false,
     Flag = 'InfiniteDisarmAttempts',
     Callback = NULL
-})
+});
 
+(function()
+    local toggleState = false
+    local originalValues = {}
+    local paths = {
+        "HideKillerWins",
+        "HidePlaytime",
+        "HideSurvivorWins"
+    }
+    local function saveOriginals(player)
+        if not originalValues[player.UserId] then
+            originalValues[player.UserId] = {}
+        end;
+        for _, key in ipairs(paths) do
+            local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+            originalValues[player.UserId][key] = value.Value
+        end
+    end;
+    local function reveal(player)
+        for _, key in ipairs(paths) do
+            local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+            value.Value = false
+        end
+    end;
+    local function restore(player)
+        if originalValues[player.UserId] then
+            for key, val in pairs(originalValues[player.UserId]) do
+                local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+                value.Value = val
+            end
+        end
+    end;
+    local function hiddenStatsFunc(disable)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if disable then
+                saveOriginals(player)
+                reveal(player)
+            else
+                restore(player)
+            end
+        end
+    end;
+    Players.PlayerAdded:Connect(function(player)
+        if toggleState == true then
+            saveOriginals(player)
+            reveal(player)
+        end
+    end)
+    ConvenienceTab:CreateToggle({
+        Name = 'Privacy bypass',
+        CurrentValue = false,
+        Flag = 'PrivacyBypass',
+        Callback = function(value)
+            toggleState = value;
+            hiddenStatsFunc(value)
+        end
+    })
+end)()
 ConvenienceTab:CreateSection('Ability modifiers')
 
 local cachedParts = {}
@@ -5846,18 +5889,6 @@ LocalPlayer.CharacterAdded:Connect(TrackAttributes)
 local Old
 local SixerConfig = require(MainKillersPath.Sixer.Config)
 local NoliConfig = require(MainKillersPath.Noli.Config)
-Old = hookmetamethod(game, '__namecall', function(self, ...)
-    if (Unloaded) then return Old(self, ...) end
-    local Args = {...}
-    if (Catsaken.Flags.DemonicPursuitAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. '666Crashed') and Forsaken.PursuitTracker) then
-        repeat wait() until (tick() - Forsaken.PursuitTracker >= SixerConfig.PursuitLength)
-    end
-    if (Catsaken.Flags.VoidRushAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. 'VoidRushCollision') and Forsaken.VoidRushTracker) then
-        repeat wait() until (tick() - Forsaken.VoidRushTracker >= NoliConfig.VoidRushDashLength)
-    end
-    return Old(self, unpack(Args))
-end)
-print("[metahooks] PursuitTracker/VoidRushTracker initialized")
 
 -- Get and Hook the function that validates radius during dusekkars spawn protection
 local IsCharWithinRadius = debug.getupvalue(DusekkarBehavior.Created, 3)
@@ -5993,6 +6024,20 @@ AutoblockTab:CreateSlider({
     Callback = NULL
 })
 
+AutoblockTab:CreateColorPicker({
+    Name = 'Color (In hitbox)',
+    Color = Color3.fromRGB(0, 255, 0),
+    Flag = 'VisualizerInColor',
+    Callback = NULL
+})
+
+AutoblockTab:CreateColorPicker({
+    Name = 'Color (Not in hitbox)',
+    Color = Color3.fromRGB(255, 0, 0),
+    Flag = 'VisualizerOutColor',
+    Callback = NULL
+})
+
 local DoAntiHit = false
 
 function CheckInvis()
@@ -6045,7 +6090,6 @@ Box.CanCollide = false
 Box.Transparency = 0.8
 Box.Material = Enum.Material.Neon
 Box.CFrame = CFrame.new(99999, 99999999, 9999)
-Box.Color = Color3.fromRGB(255, 0, 0)
 Box:SetAttribute("in", false)
 
 task.spawn(function()
@@ -6080,12 +6124,13 @@ task.spawn(function()
                 Box:SetAttribute("in", false)
             end
 
-            Box.Color = Box:GetAttribute("in") and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            Box.Color = Catsaken.Flags["Visualizer" .. (Box:GetAttribute("in") and "In" or "Out") .. "Color"].Color
         end)
     end
 end)
 
 function Counter(KillerModel, Root, track)
+    if (KillerModel:GetAttribute('Invincible') == 1) then return end
     if (CheckInvis()) then return end
     local IsInBox = Box:GetAttribute("in")
     if IsInBox then
@@ -6153,6 +6198,46 @@ function IsFacing2(localRoot, targetRoot, fDot, rDot)
     return forwardDot > (fDot or 0.7) and rightDot < (rDot or 0.4)
 end
 
+function SpyStuns(Char)
+    Char:GetAttributeChangedSignal('Invincible'):Connect(function(v)
+        if Char:GetAttribute("Invincible") == 1 then
+            if tick() - tonumber(Char:GetAttribute("RecentAttackerTime")) <= 1 then
+                if Char == LocalPlayer.Character then return end
+                if Catsaken.Flags.StunSpy.CurrentValue then
+                    local timestunned = 0
+                    local attackerchar = Players[Char:GetAttribute("RecentAttacker")].Character
+                    if attackerchar.Name == "Shedletsky" then
+                        timestunned = require(MainSurvivorsPath.Shedletsky.Config).SlashStunTime
+                    elseif attackerchar.Name == "TwoTime" then
+                        timestunned = 2
+                    elseif attackerchar.Name == "Guest1337" and (Char.HumanoidRootPart:FindFirstChild("rbxassetid://13471740561") or Char.HumanoidRootPart:FindFirstChild("rbxassetid://116900970230089")) then
+                        timestunned = require(MainSurvivorsPath.Guest1337.Config).ParryStunTime
+                    end
+                    if timestunned == 0 then return warn("cant figure out what stunned") end
+                    timestunned = timestunned + 0.75 -- so forsaken usually takes like 1 second to let the killer actually move for some reason
+                    local bb = Instance.new("BillboardGui", Char.Head)
+                    bb.AlwaysOnTop = true
+                    bb.StudsOffset = Vector3.new(0, 2, 0)
+                    bb.Size = UDim2.new(1, 40, 1, 0)
+                    bb.Name = "stunspybb"
+                    local tl = Instance.new("TextLabel", bb)
+                    tl.Size = UDim2.new(1, 0, 1, 0)
+                    tl.TextSize = 20
+                    tl.Font = Enum.Font.LuckiestGuy
+                    tl.BackgroundTransparency = 1
+                    tl.TextColor3 = Color3.fromRGB(212, 0, 0)
+                    local start = tick()
+                    while timestunned - (tick() - start) > 0 do
+                        tl.Text = string.format("Stunned for %.2fs", timestunned - (tick() - start))
+                        task.wait()
+                    end
+                    bb:Destroy()
+                end
+            end
+        end
+    end)
+end
+
 function TrackAnimations(Char,IsSurvivor)
     local Root = Char and Char:WaitForChild('HumanoidRootPart', 7)
     if (not Root) then return end
@@ -6218,7 +6303,8 @@ function TrackAnimations(Char,IsSurvivor)
         end)
         if (KillerModel ~= nil) then
             if (HasAbilityReady("Block") and (not IsKiller()) and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
-                while track.IsPlaying do
+                local startedtime = tick()
+                while track.IsPlaying and tick() - startedtime <= 0.31 do -- this is roughly the time that hitboxes stop working
                     if Counter(KillerModel, Root, track) then break end
                     task.wait()
                 end
@@ -6230,9 +6316,11 @@ function TrackAnimations(Char,IsSurvivor)
     end)
 end
 for _, Killer in Forsaken.Killers do
+    SpyStuns(Killer)
     TrackAnimations(Killer)
 end
 Killers.ChildAdded:Connect(function(Killer)
+    SpyStuns(Killer)
     TrackAnimations(Killer)
 end)
 for _, Surv in Forsaken.Survivors do
@@ -6408,17 +6496,6 @@ PlayerTab:CreateToggle({
         end)
     end
 })
-
--- Replace the tweening speed to be instant
-local Old
-Old = hookmetamethod(game, '__namecall', function(self, ...)
-    if (Unloaded) then return Old(self, ...) end
-    local Args = {...}
-    if (Catsaken.Flags.NoSprintTween.CurrentValue and not checkcaller() and self == TweenService and getnamecallmethod() == 'Create' and Args[1] == SprintModule.__speedMultiplier) then
-        Args[2] = TweenInfo.new(0)
-    end
-    return Old(self, unpack(Args))
-end)
 
 PlayerTab:CreateDropdown({
     Name = 'Device Spoofer',
@@ -6643,6 +6720,17 @@ PlayerTab:CreateToggle({
     Flag = 'AutoChickenFar',
     Callback = NULL,
     TextMode = true
+})
+
+PlayerTab:CreateToggle({
+    Name = 'Stun spy',
+    CurrentValue = false,
+    Flag = 'StunSpy',
+    Callback = function(cb)
+        if cb then
+            Rayfield:Notify({Title = 'Work in progress', Content = 'Stun spy is still a work in progress, so it doesnt detect some stun types YET, it only detects: shedletsky, guest1337, twotime', Duration = 12, Image = 'info'})
+        end
+    end
 })
 
 PlayerTab:CreateSection('Invisibility')
@@ -7195,6 +7283,14 @@ AntisTab:CreateToggle({
     end
 })
 
+AntisTab:CreateToggle({
+    Name = 'Anti footsteps',
+    CurrentValue = false,
+    Flag = 'AntiFootsteps',
+    Callback = NULL
+})
+
+
 function HookEffect(Module, Name, Flag)
     local Old
     Old = hookfunction(Module.Applied, newcclosure(function(...)
@@ -7692,7 +7788,43 @@ if ShouldUseOldUI then
     ConfigsTab:CreateLabel('You cannot create multiple configs on rayfield.')
 else
     cfgmanager()
+    print('[Catsaken] config manager initialized')
 end
+
+local Old
+Old = hookmetamethod(game, '__namecall', function(self, ...)
+    if (Unloaded) then return Old(self, ...) end
+    local Args = {...}
+    if typeof(self) == 'Instance' and tostring(self) == 'RemoteEvent' then
+        local Argument = ({...})[2]
+        if type(Argument) == 'table' and typeof(Argument[1]) == 'buffer' then
+            if buffer.tostring(Argument[1]):find('PlasmaBeam') then
+                WaitAndReset('DusekkarActive')
+            elseif buffer.tostring(Argument[1]):find('Nova') then
+                WaitAndReset('NoliActive')
+            elseif buffer.tostring(Argument[1]):find('CorruptNature') then
+                WaitAndReset('CoolkidActive')
+            end
+        end
+        return Old(self, unpack(Args))
+    end
+    if (Catsaken.Flags.DemonicPursuitAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. '666Crashed') and Forsaken.PursuitTracker) then
+        repeat wait() until (tick() - Forsaken.PursuitTracker >= SixerConfig.PursuitLength)
+        return Old(self, unpack(Args))
+    end
+    if (Catsaken.Flags.VoidRushAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. 'VoidRushCollision') and Forsaken.VoidRushTracker) then
+        repeat wait() until (tick() - Forsaken.VoidRushTracker >= NoliConfig.VoidRushDashLength)
+        return Old(self, unpack(Args))
+    end
+    if (Catsaken.Flags.AntiFootsteps.CurrentValue and Args[1] == "FootSP")  then
+        return;
+    end
+    if (Catsaken.Flags.NoSprintTween.CurrentValue and not checkcaller() and self == TweenService and getnamecallmethod() == 'Create' and Args[1] == SprintModule.__speedMultiplier) then
+        Args[2] = TweenInfo.new(0)
+    end
+    return Old(self, unpack(Args))
+end)
+print("[metahooks] __namecall hook initialized")
 
 LOADSTEP2 = true
 
