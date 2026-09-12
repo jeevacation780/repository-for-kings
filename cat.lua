@@ -8018,7 +8018,7 @@ AntisTab:CreateToggle({
 (function()
     if not _G.UNLOCK_ANTICHEAT then return end
     AntisTab:CreateSection('Anticheat')
-    AntisTab:CreateLabel('If you lag alot if may falsely accuse players, especially teleportation and stamina mods.')
+    AntisTab:CreateLabel('If you lag alot it may falsely accuse players, especially teleportation and stamina mods.')
     local cheaters = {}
     local cheatersnames = {}
     local anticheaterrors = {}
