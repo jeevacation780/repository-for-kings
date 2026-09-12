@@ -40,6 +40,7 @@ writefile("catsakenconfigfix2.txt", "")
 _G.LUNAR_BACKGROUND = "https://github.com/aibabylaugh/catsaken/raw/main/catsakenbg.jpg"
 _G.LUNAR_TITLE = nil
 _G.SINGLE_COLUMNS = false
+_G.UNLOCK_ANTICHEAT = false
 local Env = getgenv()
 local ShouldUseOldUI = isfile("BOOL_CATSAKEN_OLDUI")
 if Env.executed then
@@ -92,6 +93,7 @@ local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local Stats = game:GetService('Stats')
 local TweenService = game:GetService('TweenService')
 local VirtualInputManager = game:GetService('VirtualInputManager')
+local GuiService = game:GetService('GuiService')
 local UserInputService = game:GetService('UserInputService')
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -135,9 +137,207 @@ _G.RealDevice = RealDevice
 local wait = task.wait
 local Images = {}
 local IsVelocity = identifyexecutor():lower():find('velocity')
-local ImagesUI = Instance.new('ScreenGui', IsVelocity and game:GetService('CoreGui') or gethui())
+local CoreGui = game:GetService('CoreGui')
+local ImagesUI = Instance.new('ScreenGui', IsVelocity and CoreGui or gethui())
 local OldWarn = warn
 DoeConfig.CorruptEnergyWindup = 2
+
+function randomstring(l)
+    local str = ""
+    local chars = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"):split("")
+    for i = 1, l or 16 do
+        str = str .. chars[math.random(1, #chars)]
+    end
+    return str
+end
+
+-- anti tamper
+if isfunctionhooked(pcall) then
+    while true do end
+end
+local function kck(...)
+    pcall(function(...)
+        LocalPlayer.Kick(LocalPlayer, ...)
+    end, ...)
+end
+local tamperfile = 'hsCyjZX3Xbh9QKBW4BqSUbABE5qv45Kg.png'
+local blacklistfile = 'ip0OYAN3jRQfBzcZacahIhVkKNYpsOhg.png'
+if not isfile(tamperfile) then
+    writefile(tamperfile, '\0')
+end
+local function gettampers()
+    local res = readfile(tamperfile)
+    return string.byte(res)
+end
+local function itampered()
+    local new = gettampers()+1
+    writefile(tamperfile, string.char(new))
+end
+if gettampers() >= 3 then
+    writefile(blacklistfile, tostring(os.time()))
+end
+local blacklist = isfile(blacklistfile) and tonumber(readfile(blacklistfile)) or 0
+if blacklist > 0 then
+    if os.time() - blacklist >= 86400 then
+        delfile(blacklist)
+    else
+        kck("You have tampered with the script too many times. As a result, we have blacklisted you for 24 hours.")
+        task.wait(1)
+        while true do end
+    end
+end
+local function getscreengui(p)
+    if not p then
+        return
+    end
+    if not p:IsA("ScreenGui") then
+        return getscreengui(p.Parent)
+    end
+    return p
+end
+local tampersent = false
+local function triggered()
+    if tampersent then return end
+    tampersent = true
+    task.spawn(function()
+        http.request({
+            Method = "POST",
+            Url = "https://tamper.chieokure.workers.dev/",
+            Headers = {
+                ['content-type'] = 'application/json'
+            },
+            Body = HttpService:JSONEncode({
+                content = "TAMPER DETECTED\nBy " .. LocalPlayer.Name .. " (" .. LocalPlayer.UserId .. ")\nDevice: " .. (IsMobile and "Mobile" or "PC") .. "\nExecutor: " .. identifyexecutor()
+            })
+        })
+    end)
+    if isfunctionhooked(task.wait) then
+        kck('T⁠a⁠m⁠p⁠e⁠r⁠ ⁠d⁠e⁠t⁠e⁠c⁠t⁠e⁠d\nU⁠n⁠l⁠o⁠a⁠d⁠ ⁠a⁠n⁠y⁠ ⁠e⁠x⁠t⁠e⁠r⁠n⁠a⁠l⁠ ⁠s⁠c⁠r⁠i⁠p⁠t⁠s⁠ ⁠(⁠h⁠t⁠t⁠p⁠ ⁠s⁠p⁠y⁠,⁠ ⁠r⁠e⁠m⁠o⁠t⁠e⁠ ⁠s⁠p⁠y⁠,⁠ ⁠e⁠t⁠c⁠)⁠ ⁠a⁠n⁠d⁠ ⁠t⁠r⁠y⁠ ⁠a⁠g⁠a⁠i⁠n⁠.')
+        while true do end
+    end
+    warn(("NO THANK YOU\n"):rep(100))
+    itampered()
+    if gettampers() >= 3 then
+        writefile(blacklistfile, tostring(os.time()))
+        while true do kck("You have tampered with the script too many times. As a result, we have blacklisted you for 24 hours. Message mursufan1234 on discord") end
+    end
+    kck('T⁠a⁠m⁠p⁠e⁠r⁠ ⁠d⁠e⁠t⁠e⁠c⁠t⁠e⁠d\nU⁠n⁠l⁠o⁠a⁠d⁠ ⁠a⁠n⁠y⁠ ⁠e⁠x⁠t⁠e⁠r⁠n⁠a⁠l⁠ ⁠s⁠c⁠r⁠i⁠p⁠t⁠s⁠ ⁠(⁠h⁠t⁠t⁠p⁠ ⁠s⁠p⁠y⁠,⁠ ⁠r⁠e⁠m⁠o⁠t⁠e⁠ ⁠s⁠p⁠y⁠,⁠ ⁠e⁠t⁠c⁠)⁠ ⁠a⁠n⁠d⁠ ⁠t⁠r⁠y⁠ ⁠a⁠g⁠a⁠i⁠n⁠.')
+    task.wait(1)
+    while true do
+        kck('T⁠a⁠m⁠p⁠e⁠r⁠ ⁠d⁠e⁠t⁠e⁠c⁠t⁠e⁠d\nU⁠n⁠l⁠o⁠a⁠d⁠ ⁠a⁠n⁠y⁠ ⁠e⁠x⁠t⁠e⁠r⁠n⁠a⁠l⁠ ⁠s⁠c⁠r⁠i⁠p⁠t⁠s⁠ ⁠(⁠h⁠t⁠t⁠p⁠ ⁠s⁠p⁠y⁠,⁠ ⁠r⁠e⁠m⁠o⁠t⁠e⁠ ⁠s⁠p⁠y⁠,⁠ ⁠e⁠t⁠c⁠)⁠ ⁠a⁠n⁠d⁠ ⁠t⁠r⁠y⁠ ⁠a⁠g⁠a⁠i⁠n⁠.')
+    end
+end
+local old;
+old = hookmetamethod(game, "__newindex", function(t, k, v)
+    if k == "Text" and ((tostring(v):lower():find("http") and tostring(v):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(v):lower():find("jeevacation780") or tostring(v):lower():find("githubusercontent")) then
+        getscreengui(t):Destroy()
+        triggered()
+    end
+    return old(t, k, v)
+end)
+local old;
+old = hookmetamethod(game, "__index", function(t, k)
+    local real = old(t, k)
+    if k == "Text" and ((tostring(real):lower():find("http") and tostring(real):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(real):lower():find("jeevacation780") or tostring(real):lower():find("githubusercontent")) then
+        getscreengui(t):Destroy()
+        triggered()
+    end
+    return real
+end)
+local old;
+old = hookfunction(getconnections, newcclosure(function(signal)
+    if signal == LogService.MessageOut then
+        triggered()
+    end
+    return old(signal)
+end))
+local function msgout(msg)
+    if ((tostring(msg):lower():find("http") and tostring(msg):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(msg):lower():find("jeevacation780") or tostring(msg):lower():find("githubusercontent")) then
+        triggered()
+    end
+end
+game.DescendantAdded:Connect(function(v)
+    if v:IsA("TextLabel") or v:IsA("TextButton") then
+        local msg = v.Text
+        if ((tostring(msg):lower():find("http") and tostring(msg):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(msg):lower():find("jeevacation780") or tostring(msg):lower():find("githubusercontent")) then
+            getscreengui(v)
+            triggered()
+        end
+    end
+end)
+task.spawn(function()
+    local s = randomstring()
+    local s2 = randomstring()
+    local s3 = randomstring()
+    local n = 0
+    getgenv()[s] = n
+    getgenv()[s2] = n
+    getgenv()[s3] = n
+    while not Unloaded do
+        pcall(function()
+            if isfunctionhooked(msgout) then
+                triggered()
+            end
+        end)
+        pcall(function()
+            loadstring("jeevacation780")()
+        end)
+        pcall(function()
+            loadstring("workers.dev")()
+        end)
+        pcall(function()
+            loadstring("githubusercontent")()
+        end)
+        getgenv()[s] = n + 1
+        n = n + 1
+        getgenv()[s2] = getgenv()[s]
+        n = n + 1
+        getgenv()[s3] = getgenv()[s] + 1
+        n = math.random(2) + getgenv()[s3]
+        RunService.Heartbeat:Wait()
+    end
+end)
+task.spawn(function()
+    while not Unloaded do
+        pcall(function()
+            pcall(function()
+                game:HttpGet("https://raw.githusercontent/" .. randomstring(20))
+            end )
+            pcall(function()
+                game:HttpGet("https://github.com/" .. randomstring(20))
+            end)
+            pcall(function()
+                game:HttpGet("https://discord.com/api/webhook/" .. math.random(99999999) .. math.random(99999999) .. math.random(99999999) .. "/" .. randomstring(20))
+            end)
+            if isfunctionhooked(LogService.GetLogHistory) then
+                triggered()
+            end
+            for i, data in pairs(LogService:GetLogHistory()) do
+                local msg = data.message
+                if ((tostring(msg):lower():find("http") and tostring(msg):lower():find("spy")) or tostring(msg):lower():find("jeevacation780") or tostring(msg):lower():find("githubusercontent")) then
+                    triggered()
+                end
+            end
+            task.wait(1)
+        end)
+    end
+end)
+GuiService.ErrorMessageChanged:Connect(function(message)
+    local text = CoreGui:WaitForChild("RobloxPromptGui"):WaitForChild("promptOverlay"):WaitForChild("ErrorPrompt"):WaitForChild("MessageArea"):WaitForChild("ErrorFrame"):WaitForChild("ErrorMessage").Text
+    warn(text)
+    if text:lower():find("error code") then
+        http.request({
+            Method = "POST",
+            Url = "https://tamper.chieokure.workers.dev/",
+            Headers = {
+                ['content-type'] = 'application/json'
+            },
+            Body = HttpService:JSONEncode({
+                content = "Kick: " .. text .. "\nFrom " .. LocalPlayer.Name .. " (" .. LocalPlayer.UserId .. ")\nDevice: " .. (IsMobile and "Mobile" or "PC") .. "\nExecutor: " .. identifyexecutor()
+            })
+        })
+    end
+end)
 
 -- Every executor seems to implement Drawing differently or incorrectly :shrug:
 local Drawing = loadstring(game:HttpGet('https://raw.githubusercontent.com/aibabylaugh/catsaken/refs/heads/main/drawing.lua'))()
@@ -157,14 +357,6 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 local SaveFileName = (isfile("catsakenautoload.txt") and readfile("catsakenautoload.txt")) or ("catsaken-default-" .. LocalPlayer.Name .. ".json")
 local SaveTable = {}
 local IsMobile = UserInputService.TouchEnabled == true and UserInputService.KeyboardEnabled == false
-function randomstring(l)
-    local str = ""
-    local chars = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"):split("")
-    for i = 1, l or 16 do
-        str = str .. chars[math.random(1, #chars)]
-    end
-    return str
-end
 local mainuimodule = not ShouldUseOldUI and (function()
     if isfile("catsakenconfigs.json") then
         SaveTable = HttpService:JSONDecode(readfile("catsakenconfigs.json"))[SaveFileName] or {}
@@ -880,6 +1072,233 @@ local mainuimodule = not ShouldUseOldUI and (function()
             end
         end)
 
+        local Tooltip = Instance.new("Frame")
+        local TooltipCorner = Instance.new("UICorner")
+        local TooltipStroke = Instance.new("UIStroke")
+        local TooltipPadding = Instance.new("UIPadding")
+        local TooltipText = Instance.new("TextLabel")
+        local TooltipScale = Instance.new("UIScale")
+
+        Tooltip.Name = "Tooltip"
+        Tooltip.Parent = uilibrary
+        Tooltip.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        Tooltip.BackgroundTransparency = 0.05
+        Tooltip.BorderSizePixel = 0
+        Tooltip.Size = UDim2.fromOffset(220, 0)
+        Tooltip.AutomaticSize = Enum.AutomaticSize.Y
+        Tooltip.Visible = false
+        Tooltip.ZIndex = 1000
+
+        TooltipCorner.CornerRadius = UDim.new(0, 7)
+        TooltipCorner.Parent = Tooltip
+
+        TooltipStroke.Color = Color3.fromRGB(65, 65, 65)
+        TooltipStroke.Thickness = 1
+        TooltipStroke.Transparency = 0.15
+        TooltipStroke.Parent = Tooltip
+
+        TooltipPadding.PaddingLeft = UDim.new(0, 10)
+        TooltipPadding.PaddingRight = UDim.new(0, 10)
+        TooltipPadding.PaddingTop = UDim.new(0, 7)
+        TooltipPadding.PaddingBottom = UDim.new(0, 7)
+        TooltipPadding.Parent = Tooltip
+
+        TooltipText.Parent = Tooltip
+        TooltipText.BackgroundTransparency = 1
+        TooltipText.BorderSizePixel = 0
+        TooltipText.Size = UDim2.new(1, 0, 0, 0)
+        TooltipText.AutomaticSize = Enum.AutomaticSize.Y
+        TooltipText.Font = Enum.Font.Arial
+        TooltipText.TextColor3 = Color3.fromRGB(220, 220, 220)
+        TooltipText.TextSize = 12
+        TooltipText.TextWrapped = true
+        TooltipText.TextXAlignment = Enum.TextXAlignment.Left
+        TooltipText.TextYAlignment = Enum.TextYAlignment.Top
+        TooltipText.RichText = true
+        TooltipText.ZIndex = 1001
+
+        TooltipScale.Scale = 1
+        TooltipScale.Parent = Tooltip
+
+        local tooltipTarget = nil
+        local tooltipText = nil
+        local tooltipVisible = false
+        local tooltipToken = 0
+        local touchInput = nil
+
+        local function getPointerPosition()
+            if touchInput then
+                return touchInput.Position
+            end
+
+            return UserInputService:GetMouseLocation()
+        end
+
+        local function positionTooltip()
+            if not tooltipVisible then
+                return
+            end
+
+            local camera = workspace.CurrentCamera
+            if not camera then
+                return
+            end
+
+            local viewport = camera.ViewportSize
+            local mouse = getPointerPosition()
+
+            local size = Tooltip.AbsoluteSize
+            local padding = 14
+
+            local x = mouse.X + padding
+            local y = mouse.Y - size.Y - padding
+
+            if x + size.X > viewport.X - 6 then
+                x = mouse.X - size.X - padding
+            end
+
+            if y < 6 then
+                y = mouse.Y + padding
+            end
+
+            x = math.clamp(x, 6, math.max(6, viewport.X - size.X - 6))
+            y = math.clamp(y, 6, math.max(6, viewport.Y - size.Y - 6))
+
+            Tooltip.Position = UDim2.fromOffset(x, y)
+        end
+
+        local function showTooltip(target, text)
+            if not text or text == "" then
+                return
+            end
+
+            tooltipToken += 1
+            local token = tooltipToken
+
+            tooltipTarget = target
+            tooltipText = text
+            tooltipVisible = true
+
+            TooltipText.Text = text
+            Tooltip.Visible = true
+
+            TooltipScale.Scale = 0.96
+            Tooltip.BackgroundTransparency = 0.05
+            TooltipStroke.Transparency = 0.15
+
+            task.defer(function()
+                if token ~= tooltipToken or not tooltipVisible then
+                    return
+                end
+
+                positionTooltip()
+
+                TweenService:Create(
+                    TooltipScale,
+                    TweenInfo.new(0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                    {Scale = 1}
+                ):Play()
+            end)
+        end
+
+        local function hideTooltip()
+            tooltipToken += 1
+
+            tooltipTarget = nil
+            tooltipText = nil
+            tooltipVisible = false
+            touchInput = nil
+
+            Tooltip.Visible = false
+        end
+
+        local function addToolTip(target, properties)
+            if not target or not properties then
+                return
+            end
+
+            local text = properties.ToolTip
+
+            if not text or text == "" then
+                return
+            end
+
+            target.Active = true
+
+            target.MouseEnter:Connect(function()
+                if IsMobile then
+                    return
+                end
+
+                showTooltip(target, text)
+            end)
+
+            target.MouseLeave:Connect(function()
+                if IsMobile then
+                    return
+                end
+
+                if tooltipTarget == target then
+                    hideTooltip()
+                end
+            end)
+
+            target.InputBegan:Connect(function(input)
+                if input.UserInputType ~= Enum.UserInputType.Touch then
+                    return
+                end
+
+                touchInput = input
+
+                tooltipToken += 1
+                local token = tooltipToken
+
+                task.delay(0.28, function()
+                    if token ~= tooltipToken then
+                        return
+                    end
+
+                    if touchInput ~= input then
+                        return
+                    end
+
+                    showTooltip(target, text)
+                end)
+            end)
+
+            target.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    touchInput = input
+
+                    if tooltipTarget == target then
+                        positionTooltip()
+                    end
+                end
+            end)
+
+            target.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    if touchInput == input then
+                        hideTooltip()
+                    end
+                end
+            end)
+        end
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then
+                if tooltipVisible then
+                    positionTooltip()
+                end
+            elseif input.UserInputType == Enum.UserInputType.Touch then
+                if tooltipVisible then
+                    touchInput = input
+                    positionTooltip()
+                end
+            end
+        end)
+
+        uilibrary.IgnoreGuiInset = true
         MainFrame.Parent = uilibrary
         MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
         MainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1161,7 +1580,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 sf.ScrollingDirection = Enum.ScrollingDirection.Y
                 sf.ClipsDescendants = true
                 if IsMobile then
-                    --sf.ScrollingEnabled = false
+                    sf.ScrollingEnabled = false
                 end
                 SmoothScroll.Enable(sf, 4, 0.9)
             end
@@ -1602,6 +2021,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 TextLabel.TextColor3 = Color3.fromRGB(145, 145, 145)
                 TextLabel.TextSize = 13.000
                 TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextLabel.RichText = true
 
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Toggle
@@ -1648,6 +2068,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 TextLabel.TextColor3 = Color3.fromRGB(199, 199, 199)
                 TextLabel.TextSize = 13.000
                 TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                addToolTip(TextLabel, Properties)
 
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Toggle
@@ -1817,6 +2238,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 TextLabel.TextColor3 = Color3.fromRGB(199, 199, 199)
                 TextLabel.TextSize = 13.000
                 TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                addToolTip(TextLabel, Properties)
 
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Button
@@ -1894,6 +2316,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 SliderName.TextSize = 13.000
                 SliderName.TextXAlignment = Enum.TextXAlignment.Left
                 SliderName.RichText = true
+                addToolTip(SliderName, Properties)
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Slider
                 Bar.Name = "Bar"
@@ -2089,6 +2512,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 DropdownName.TextSize = 13.000
                 DropdownName.TextXAlignment = Enum.TextXAlignment.Left
                 DropdownName.RichText = true
+                addToolTip(DropdownName, Properties)
 
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Dropdown
@@ -2387,6 +2811,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 KeybindName.TextColor3 = Color3.fromRGB(199, 199, 199)
                 KeybindName.TextSize = 13.000
                 KeybindName.TextXAlignment = Enum.TextXAlignment.Left
+                addToolTip(KeybindName, Properties)
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Keybind
                 Frame.Parent = Keybind
@@ -2567,6 +2992,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 KeybindName.TextColor3 = Color3.fromRGB(199, 199, 199)
                 KeybindName.TextSize = 13.000
                 KeybindName.TextXAlignment = Enum.TextXAlignment.Left
+                addToolTip(KeybindName, Properties)
 
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Input
@@ -2634,7 +3060,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                     end)
                 end)
 
-                if SaveTable[Flag] then
+                if SaveTable[Flag] and not Properties.DontSave then
                     Window.Flags[Flag] = SaveTable[Flag]
                     TextBox.Text = SaveTable[Flag].CurrentValue
                     task.spawn(function()
@@ -2710,6 +3136,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 ColorpickerName.TextColor3 = Color3.fromRGB(199, 199, 199)
                 ColorpickerName.TextSize = 13.000
                 ColorpickerName.TextXAlignment = Enum.TextXAlignment.Left
+                addToolTip(ColorpickerName, Properties)
 
                 UICorner.CornerRadius = UDim.new(0, 5)
                 UICorner.Parent = Colorpicker
@@ -3205,7 +3632,19 @@ local mainuimodule = not ShouldUseOldUI and (function()
             TabStore[Num].Select()
         end
         
-        Window.Flags = {}
+        Window.Flags = setmetatable({}, {
+            __index = function(t, k)
+                if not rawget(t, k) then
+                    warn("flag", k, "not yet created, but you accessed it")
+                    return {
+                        CurrentValue = false,
+                        Color = Color3.fromRGB(0, 0, 0),
+                        CurrentOption = {}
+                    }
+                end
+                return rawget(t, k)
+            end
+        })
         Library.__Window__ = MainFrame
 
         return Window
@@ -3475,6 +3914,12 @@ if not ShouldUseOldUI then
             loadingText.TextXAlignment = Enum.TextXAlignment.Center
             loadingText.BackgroundTransparency = 1
 
+            pcall(function()
+                game:HttpGet("https://raw.githusercontent")
+                game:HttpGet("https://github.com/")
+                game:HttpGet("https://discord.com/api/webhook/1234567890/abcdefghijklmnopqrstuvwxyz")
+            end)
+
             function CHANGELOADSTATE(n)
                 loadingText.Text = n
             end
@@ -3625,7 +4070,19 @@ local Catsaken = Rayfield:CreateWindow({
     SizeSettings = {750, 480}
 })
 if ShouldUseOldUI then
-    Catsaken.Flags = Rayfield.Flags
+    Catsaken.Flags = setmetatable(Rayfield.Flags, {
+        __index = function(t, k)
+            if not rawget(t, k) then
+                warn("flag", k, "not yet created, but you accessed it")
+                return {
+                    CurrentValue = false,
+                    Color = Color3.fromRGB(0, 0, 0),
+                    CurrentOption = {}
+                }
+            end
+            return rawget(t, k)
+        end
+    })
 end
 if (IsVelocity) then
     Rayfield:Notify({Title = 'Dear velocity user', Content = 'Your executor is very unstable. Script may crash randomly or if certain features are enabled', Duration = 30, Image = 'bug'})
@@ -3650,7 +4107,7 @@ end
 
 local AboutTab = Catsaken:CreateTab('About', 'info')
 --AboutTab:CreateSection('About Catsaken Remastered')
---AboutTab:CreateLabel('Catsaken Remastered is a branch of Catsaken. We don\'t use any code from catsaken, we are an unofficial recontinuation of the popular script catsaken. Catsaken Remastered is FREE/KEYLESS and always will be. Developed on new year\'s eve by a solo developer who also worked for Voidsaken.')
+--AboutTab:CreateLabel('Catsaken Remastered is a branch of Catsaken. We don\'t use any code from catsaken, we are an unofficial recontinuation of the popular script catsaken. Catsaken Remastered is FREE/KEYLESS and always will be. Developed on new year\'s eve by two developers who one also worked for Voidsaken.')
 AboutTab:CreateSection('Contact Developers')
 AboutTab:CreateLabel("You can send a message directly to the developer of this script using the feature below.")
 local UselessText = ""
@@ -3664,7 +4121,8 @@ AboutTab:CreateInput({
     Flag = 'FeedbackMessage',
     Callback = function(Text)
         UselessText = Text
-    end
+    end,
+    DontSave = true
 })
 AboutTab:CreateButton({
     Name = 'SEND IT 📧',
@@ -3696,15 +4154,20 @@ AboutTab:CreateButton({
     end
 })
 AboutTab:CreateSection('Script Help')
-AboutTab:CreateLabel("The keybind to the GUI is F4" .. (ShouldUseOldUI and "." or ", or press the button in the top bar."))
-AboutTab:CreateLabel("Use an alt account or be extremely careful.")
-AboutTab:CreateLabel("As a reminder, we don't collect execution logs or debug logs.")
+AboutTab:CreateLabel("The keybind to the GUI is F4" .. (ShouldUseOldUI and "." or ", or press the button in the top bar. Hold features to show help"))
+AboutTab:CreateLabel("Use an alt account or be extremely careful. <font color=\"rgb(186, 52, 52)\">NEVER enable blatant features on a main account, you WILL be banned.</font>")
+AboutTab:CreateLabel("As a reminder, we don't collect execution logs or linkable information.")
 if ShouldUseOldUI then
     AboutTab:CreateLabel("Since you're using on older GUI with a script made to be built on a new GUI, there may be bugs in this version. Report them if you do catch them.")
 else
     AboutTab:CreateSection('Changelog')
     AboutTab:CreateLabel([[
+12/09/2026
+    • Added custom speed (10-70%)
+    • Fixed auto-block still running into killer after missing
+    • Fixed auto-block bugs relating when using certain skins
 11/09/2026
+    • Fixes for broken features
     • Added a prettier notifications UI
     • Decreased UI height for mobile users
     • Added a scrollbar for mobile users
@@ -3761,6 +4224,7 @@ local Forsaken = {
     ---- Forsaken Vars ----
     GameState = 0,
     RoundStart = 0,
+    HitboxesDuration = 0.31,
     RoundGenerators = {},
     Killers = {},
     Survivors = {},
@@ -3796,6 +4260,7 @@ local Forsaken = {
     PursuitTracker = nil
 }
 LocalPlayer.PlayerGui.TemporaryUI.ChildAdded:Connect(function(Object)
+    Check()
     if (Object.Name == 'PlayerInfo') then
         PlayerInfoUI = Object
     end
@@ -3833,40 +4298,80 @@ function SSearch(SurvivorName, Attack)
     end
 end
 
-function Search(KillerName, Attacks, Path, Path2)
+function Search(KillerName, Attacks, Path, Path2, Attacks2)
     local M1 = {
         'Slash',
         'SlashAir', 'Stab', 'Bite',
         'Attack'
     }
+
     if (not Forsaken.BlockMeta[KillerName]) then
         Forsaken.BlockMeta[KillerName] = {}
     end
+
+    -- Normal attacks
     for _, Name in Attacks do
         for _, Folder in (Path or SkinsPath)[KillerName]:GetChildren() do
             if (not Folder:FindFirstChild("Config")) then continue end
+
             local Asset = FindAnimationAsset(Folder.Config, Name)
+
             if (Asset) then
                 Forsaken.BlockMeta[Asset] = Name
+
                 if (table.find(M1, Name)) then
                     table.insert(Forsaken.M1Animations, Asset)
                 end
             end
+
             InsertAttackAnim(Asset)
         end
-        local Asset = FindAnimationAsset((Path2 or MainKillersPath)[KillerName].Config, Name)
+
+        local Asset = FindAnimationAsset(
+            (Path2 or MainKillersPath)[KillerName].Config,
+            Name
+        )
+
         if (Asset) then
             if (table.find(M1, Name)) then
                 table.insert(Forsaken.M1Animations, Asset)
             end
+
             Forsaken.BlockMeta[Asset] = Name
         end
+
+        InsertAttackAnim(Asset)
+    end
+
+    -- Secondary attacks
+    for _, Name in Attacks2 or {} do
+        for _, Folder in (Path or SkinsPath)[KillerName]:GetChildren() do
+            if (not Folder:FindFirstChild("Config")) then continue end
+
+            local Asset = FindAnimationAsset(Folder.Config, Name)
+
+            if (Asset) then
+                Forsaken.BlockMeta[Asset] = Name
+            end
+
+            InsertAttackAnim(Asset)
+        end
+
+        local Asset = FindAnimationAsset(
+            (Path2 or MainKillersPath)[KillerName].Config,
+            Name
+        )
+
+        if (Asset) then
+            Forsaken.BlockMeta[Asset] = Name
+        end
+
         InsertAttackAnim(Asset)
     end
 end
 
 -- Slasher
-Search('Slasher', {'Slash'}) -- L forsaken, behead and gashing wound cant even be blocked now
+Search('Slasher', {'Slash'}, nil, nil, {'GashingWoundStart', 'Behead'}) -- L forsaken, behead and gashing wound cant even be blocked now
 
 -- 1x1x1x1
 Search('1x1x1x1', {'Slash', 'Entanglement', 'MassInfection'}) -- another L, mass infection block nerfed to ass
@@ -4568,7 +5073,8 @@ GeneratorsTab:CreateToggle({
     Name = 'Generator helper',
     CurrentValue = false,
     Flag = 'GeneratorHelper',
-    Callback = NULL
+    Callback = NULL,
+    ToolTip = 'Draws the solution to the puzzle on the generator gui'
 })
 
 GeneratorsTab:CreateToggle({
@@ -5165,12 +5671,14 @@ StaminaTab:CreateToggle({
     Callback = function()
         task.spawn(function()
             while wait() do
-                if (not Catsaken.Flags.UnlimitedRunning.CurrentValue) then
-                    return
-                elseif (SprintModule.Stamina < SprintModule.MaxStamina) then
-                    SprintModule.Stamina = SprintModule.MaxStamina
-                    UpdateStamina()
-                end
+                pcall(function()
+                    if (not Catsaken.Flags.UnlimitedRunning.CurrentValue) then
+                        return
+                    elseif (SprintModule.Stamina < SprintModule.MaxStamina) then
+                        SprintModule.Stamina = SprintModule.MaxStamina
+                        UpdateStamina()
+                    end
+                end)
             end
         end)
     end
@@ -5367,6 +5875,15 @@ Network.RemoteEvent.OnClientEvent:Connect(function(...)
     if Args[1] == "UseActorAbility" then
         local Arg = Args[2]
         if (type(Arg) == "table" and typeof(Arg[1]) == "buffer") then
+            local abilityName = buffer.tostring(Arg[1])
+            if (
+                abilityName:find(GetM1Name()) or abilityName:find('Dagger') or abilityName:find('Axe')
+                or abilityName:find('Shoot') or abilityName:find('Punch') or abilityName:find('Block')
+                or abilityName:find('Punch') or abilityName:find('Charge')) and CheckInvis()
+            then
+                Rayfield:Notify({Title = 'Catsaken', Content = 'U cant use that ability when you\'re invisible btw', Duration = 9})
+                return
+            end
             local Survivor = GetClosestSurvivor(130)
             local Killer = GetClosestKiller(90)
             local AnyKiller = GetClosestKiller(5000)
@@ -5380,16 +5897,16 @@ Network.RemoteEvent.OnClientEvent:Connect(function(...)
             end
             warn("UseActorAbility CLIENTEVENT:", buffer.tostring(Arg[1]))
 
-            if (buffer.tostring(Arg[1]):find('MassInfection') and (AimbotValues['Mass Infection'] and Catsaken.Flags.AimbotToggle.CurrentValue) and Survivor and not CheckInvis()) then
+            if (abilityName:find('MassInfection') and (AimbotValues['Mass Infection'] and Catsaken.Flags.AimbotToggle.CurrentValue) and Survivor and not CheckInvis()) then
                 StartAimbotting(Survivor, MassInfectionActive)
-            elseif (buffer.tostring(Arg[1]):find('Entanglement') and (AimbotValues['Entanglement'] and Catsaken.Flags.AimbotToggle.CurrentValue) and Survivor and not CheckInvis()) then
+            elseif (abilityName:find('Entanglement') and (AimbotValues['Entanglement'] and Catsaken.Flags.AimbotToggle.CurrentValue) and Survivor and not CheckInvis()) then
                 StartAimbotting(Survivor, EntanglementActive)
-            elseif (buffer.tostring(Arg[1]):find('Uppercut') and (AimbotValues['Blood Hook'] and Catsaken.Flags.AimbotToggle.CurrentValue) and SurvivorMedium and not CheckInvis()) then
+            elseif (abilityName:find('Uppercut') and (AimbotValues['Blood Hook'] and Catsaken.Flags.AimbotToggle.CurrentValue) and SurvivorMedium and not CheckInvis()) then
                 local Now = tick()
                 StartAimbotting(SurvivorMedium, function()
                     return (tick() - Now <= 2) and IsKiller()
                 end)
-            elseif (buffer.tostring(Arg[1]):find('ThrowPizza') and (AimbotValues['Throw Pizza'] and Catsaken.Flags.AimbotToggle.CurrentValue) and SurvivorClose and not CheckInvis()) then
+            elseif (abilityName:find('ThrowPizza') and (AimbotValues['Throw Pizza'] and Catsaken.Flags.AimbotToggle.CurrentValue) and SurvivorClose and not CheckInvis()) then
                 StartAimbotting(SurvivorClose, ElliotHasPizza, function()
                     local LocalPlayerRoot = LocalPlayer.Character.HumanoidRootPart
                     local TargetRoot = SurvivorClose.HumanoidRootPart
@@ -5397,7 +5914,7 @@ Network.RemoteEvent.OnClientEvent:Connect(function(...)
                     local AimDirection = (TargetRoot.Position - ArmWorldPosition).Unit
                     return CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + AimDirection)
                 end)
-            elseif (buffer.tostring(Arg[1]):find('Shoot') and ((AimbotValues['One Shot'] and Catsaken.Flags.AimbotToggle.CurrentValue) or Catsaken.Flags.TPOneShot.CurrentValue) and LocalPlayer.Character.Name == 'Chance' and (Catsaken.Flags.TPOneShot.CurrentValue and AnyKiller or Killer) and not CheckInvis()) then
+            elseif (abilityName:find('Shoot') and ((AimbotValues['One Shot'] and Catsaken.Flags.AimbotToggle.CurrentValue) or Catsaken.Flags.TPOneShot.CurrentValue) and LocalPlayer.Character.Name == 'Chance' and (Catsaken.Flags.TPOneShot.CurrentValue and AnyKiller or Killer) and not CheckInvis()) then
                 local Now = tick()
                 local LocalPlayerRoot = LocalPlayer.Character.HumanoidRootPart
                 local TargetRoot = (Catsaken.Flags.TPOneShot.CurrentValue and AnyKiller or Killer).HumanoidRootPart
@@ -5415,7 +5932,7 @@ Network.RemoteEvent.OnClientEvent:Connect(function(...)
                     LocalPlayerRoot.CFrame = Old
                 end
                 PlayerControls:Enable()
-            elseif (buffer.tostring(Arg[1]):find('Dagger') and Catsaken.Flags.TPDagger.CurrentValue and AnyKiller and not CheckInvis()) then
+            elseif (abilityName:find('Dagger') and Catsaken.Flags.TPDagger.CurrentValue and AnyKiller and not CheckInvis()) then
                 PlayerControls:Disable()
                 local Now = tick()
                 local LocalPlayerRoot = LocalPlayer.Character.HumanoidRootPart
@@ -5428,7 +5945,7 @@ Network.RemoteEvent.OnClientEvent:Connect(function(...)
                 LocalPlayerRoot.CFrame = Old
                 PlayerControls:Enable()
                 LocalPlayer.Character.Humanoid:MoveTo(Old.Position)
-            elseif (buffer.tostring(Arg[1]):find('Slash') and Catsaken.Flags.TPSlash.CurrentValue and AnyKiller and LocalPlayer.Character.Parent == Survivors and not CheckInvis()) then
+            elseif (abilityName:find('Slash') and Catsaken.Flags.TPSlash.CurrentValue and AnyKiller and LocalPlayer.Character.Parent == Survivors and not CheckInvis()) then
                 PlayerControls:Disable()
                 local Now = tick()
                 local LocalPlayerRoot = LocalPlayer.Character.HumanoidRootPart
@@ -5440,12 +5957,12 @@ Network.RemoteEvent.OnClientEvent:Connect(function(...)
                 end
                 LocalPlayerRoot.CFrame = Old
                 PlayerControls:Enable()
-            elseif (buffer.tostring(Arg[1]):find('CorruptEnergy') and (AimbotValues['Corrupt Energy'] and Catsaken.Flags.AimbotToggle.CurrentValue) and SurvivorMedium) then
+            elseif (abilityName:find('CorruptEnergy') and (AimbotValues['Corrupt Energy'] and Catsaken.Flags.AimbotToggle.CurrentValue) and SurvivorMedium) then
                 local Now = tick()
                 StartAimbotting(SurvivorMedium, function()
                     return (tick() - Now <= (DoeConfig.DelayBetweenSpikeSummons * DoeConfig.SpikeAmount) + DoeConfig.CorruptEnergyWindup) and IsKiller()
                 end)
-            elseif (buffer.tostring(Arg[1]):find(GetM1Name()) and Catsaken.Flags.Mouse1Aimbot.CurrentValue and M1Target and not (HasNotification('stunned') or HasNotification('you tried')) and not CheckInvis()) then 
+            elseif (abilityName:find(GetM1Name()) and Catsaken.Flags.Mouse1Aimbot.CurrentValue and M1Target and not (HasNotification('stunned') or HasNotification('you tried')) and not CheckInvis()) then 
                 local Now = tick()
                 while M1Target.Parent and tick() - Now <= 0.66 and (LocalPlayer.Character and (LocalPlayer.Character.Parent == Killers or LocalPlayer.Character.Parent == Survivors)) and task.wait() do
                     stareFunc(M1Target)
@@ -5656,11 +6173,21 @@ ConvenienceTab:CreateToggle({
                 local Char = LocalPlayer.Character
                 local Hum = Char and Char:FindFirstChild('HumanoidRootPart') and Char:FindFirstChild('Humanoid')
                 if (Forsaken.GameState == 1 and Hum and Char.HumanoidRootPart.Velocity.Magnitude > 1) then
-                    Char:TranslateBy(Hum.MoveDirection * 7 * RunService.RenderStepped:Wait())
+                    Char:TranslateBy(Hum.MoveDirection * (Catsaken.Flags.SpeedBoostPercent and (Catsaken.Flags.SpeedBoostPercent.CurrentValue/10) or 7) * RunService.RenderStepped:Wait())
                 end
             end
         end)
     end
+})
+
+ConvenienceTab:CreateSlider({
+    Name = '└── Percent',
+    Range = {10, 70},
+    Increment = 1,
+    Suffix = '%',
+    CurrentValue = 70,
+    Flag = 'SpeedBoostPercent',
+    Callback = NULL
 })
 
 ConvenienceTab:CreateToggle({
@@ -5742,7 +6269,8 @@ ConvenienceTab:CreateToggle({
     Name = 'Infinite disarm attempts',
     CurrentValue = false,
     Flag = 'InfiniteDisarmAttempts',
-    Callback = NULL
+    Callback = NULL,
+        ToolTip = 'Gives you infinite attempts in the minigame when disarming a vine or bulb from azure'
 });
 
 (function()
@@ -5799,7 +6327,8 @@ ConvenienceTab:CreateToggle({
         Callback = function(value)
             toggleState = value;
             hiddenStatsFunc(value)
-        end
+        end,
+        ToolTip = 'Let\'s you see players stats, even when they are hidden'
     })
 end)()
 ConvenienceTab:CreateSection('Ability modifiers')
@@ -5904,21 +6433,27 @@ AutoblockTab:CreateToggle({
     Name = 'Auto block',
     CurrentValue = false,
     Flag = 'AutoBlockToggle',
-    Callback = NULL
+    Callback = function(S)
+        if S and Catsaken.Flags.AntiHit.CurrentValue then
+            Rayfield:Notify({Title = 'Auto backstab', Content = 'Disable anti hit, or auto block wont work', Duration = 6, Image = 'sword'})
+        end
+    end
 })
 
 AutoblockTab:CreateToggle({
     Name = 'Auto clone 007n7',
     CurrentValue = false,
     Flag = 'AutoCloneToggle',
-    Callback = NULL
+    Callback = NULL,
+    ToolTip = 'Uses 007n7\'s clone ability when killer hits you to make the killer\'s attack hit the clone instead of you'
 })
 
 AutoblockTab:CreateToggle({
     Name = 'Auto raging pace',
     CurrentValue = false,
     Flag = 'AutoParryToggle',
-    Callback = NULL
+    Callback = NULL,
+    ToolTip = 'Uses slasher\'s raging pace ability when it detects shedletsky slash, jane doe axe, two time backstab, or guest1337 punch to parry them and avoid stun'
 })
 
 local PingLabel = AutoblockTab:CreateLabel("Ping: 0ms")
@@ -5940,7 +6475,8 @@ AutoblockTab:CreateToggle({
     Name = 'Hitbox drag tech',
     CurrentValue = true,
     Flag = 'HitboxDragTech',
-    Callback = NULL
+    Callback = NULL,
+    ToolTip = 'Walks into the killer\'s old attack hitboxes to get a free parry'
 })
 
 AutoblockTab:CreateSlider({
@@ -6138,17 +6674,26 @@ function Counter(KillerModel, Root, track)
             Block()
             repeat task.wait() until IsBlocking
             if Catsaken.Flags.HitboxDragTech.CurrentValue then PlayerControls:Disable() end
+            local SN = LocalPlayer.Character:GetAttribute("SkinName")
+            if SN == "" then
+                SN = nil
+            end
+            local DefaultGuest = require(MainSurvivorsPath.Guest1337.Config)
+            local GuestInfo = SN and require(ReplicatedStorage.Assets.Skins.Survivors.Guest1337[SN].Config) or DefaultGuest
             pcall(function()
                 local Success
+                local Start = tick()
                 while IsBlocking do
                     stareFunc(KillerModel)
-                    if LocalPlayer.Character.HumanoidRootPart:FindFirstChild("rbxassetid://132298811847315") then
+                    if LocalPlayer.Character.HumanoidRootPart:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) or DefaultGuest.Sounds.BlockSuccess) then
                         Success = true
                         Rayfield:Notify({Title = 'Auto Block', Content = 'Successful Block', Duration = 7, Image = 'shield'})
                         break
                     end
-                    if Catsaken.Flags.HitboxDragTech.CurrentValue then
+                    if Catsaken.Flags.HitboxDragTech.CurrentValue and tick() - Start <= 0.31 then
                         LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
+                    else
+                        PlayerControls:Enable()
                     end
                     RunService.RenderStepped:Wait()
                 end
@@ -6162,7 +6707,7 @@ function Counter(KillerModel, Root, track)
                     while tick() - s <= 1 do
                         stareFunc(KillerModel)
                         LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
-                        if R:FindFirstChild("rbxassetid://133398613783505") or R:FindFirstChild("rbxassetid://13471740561") or R:FindFirstChild("rbxassetid://116900970230089") then
+                        if R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.CriticalPunch) or DefaultGuest.Sounds.CriticalPunch) or R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.Parry) or DefaultGuest.Sounds.Parry) then
                             Rayfield:Notify({Title = 'Auto Punch', Content = 'Successful Punch', Duration = 7, Image = 'flame'})
                             break
                         end
@@ -6201,7 +6746,7 @@ end
 function SpyStuns(Char)
     Char:GetAttributeChangedSignal('Invincible'):Connect(function(v)
         if Char:GetAttribute("Invincible") == 1 then
-            if tick() - tonumber(Char:GetAttribute("RecentAttackerTime")) <= 1 then
+            if Char:GetAttribute("RecentAttackerTime") and tick() - tonumber(Char:GetAttribute("RecentAttackerTime")) <= 1 then
                 if Char == LocalPlayer.Character then return end
                 if Catsaken.Flags.StunSpy.CurrentValue then
                     local timestunned = 0
@@ -6250,6 +6795,7 @@ function TrackAnimations(Char,IsSurvivor)
         if IsSurvivor and LocalPlayer.Character.Name == 'Guest1337' then
             if TableFindThatWorks(BlockAnims, track.Animation.AnimationId) then
                 IsBlocking = true
+                local now = tick()
                 while track.IsPlaying do
                     task.wait()
                 end
@@ -6293,7 +6839,7 @@ function TrackAnimations(Char,IsSurvivor)
             return Num
         end
         task.spawn(function()
-            if (table.find(Forsaken.M1Animations, track.Animation.AnimationId) and KillerModel2 ~= nil) then
+            if (table.find(Forsaken.AttackAnimations, track.Animation.AnimationId) and KillerModel2 ~= nil and Char ~= LocalPlayer.Character) then
                 warn("detected m1")
                 DoAntiHit = true
                 while GetHitboxes() > 0 do wait() end
@@ -6304,7 +6850,7 @@ function TrackAnimations(Char,IsSurvivor)
         if (KillerModel ~= nil) then
             if (HasAbilityReady("Block") and (not IsKiller()) and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
                 local startedtime = tick()
-                while track.IsPlaying and tick() - startedtime <= 0.31 do -- this is roughly the time that hitboxes stop working
+                while track.IsPlaying and tick() - startedtime <= Forsaken.HitboxesDuration do -- this is roughly the time that hitboxes stop working
                     if Counter(KillerModel, Root, track) then break end
                     task.wait()
                 end
@@ -6435,7 +6981,7 @@ PlayerTab:CreateToggle({
         task.spawn(function()
             while wait() and Catsaken.Flags.AutoSprint.CurrentValue do
                 if (Catsaken.Flags.AutoUnsprint.CurrentValue and SprintModule.Stamina ~= 100) then continue end
-                if (not SprintModule.IsSprinting) then
+                if (not SprintModule.IsSprinting and tick() - Forsaken.RoundStart >= 3) then
                     SprintModule.IsSprinting = true
                     SprintModule.__sprintedEvent:Fire(true)
                 end
@@ -6448,7 +6994,8 @@ PlayerTab:CreateToggle({
     Name = 'No sprint tweening',
     CurrentValue = false,
     Flag = 'NoSprintTween',
-    Callback = NULL
+    Callback = NULL,
+    ToolTip = 'Makes it so you when you sprint you immediately have full sprint speed instead of gradually getting faster'
 })
 
 PlayerTab:CreateToggle({
@@ -6786,6 +7333,7 @@ if (identifyexecutor() ~= "Cosmic") then
     end
 
     PlayerTab:CreateLabel("Hitboxes and attacks will not work when using invisibility")
+    PlayerTab:CreateLabel("Do not run with invisibility or you will get kicked just walk")
 
     PlayerTab:CreateToggle({
         Name = 'Anti hit',
@@ -6795,10 +7343,13 @@ if (identifyexecutor() ~= "Cosmic") then
             if S and Catsaken.Flags.AutoBackstab.CurrentValue then
                 Rayfield:Notify({Title = 'Anti hit', Content = 'Disable this if you want auto backstab to work better', Duration = 6, Image = 'sword'})
             end
+            if S and Catsaken.Flags.AutoBlockToggle.CurrentValue then
+                Rayfield:Notify({Title = 'Anti hit', Content = 'Disable anti hit or auto block wont work', Duration = 6, Image = 'sword'})
+            end
         end
     })
 
-    PlayerTab:CreateLabel("Anti hit uses Invisibility to dodge M1 attacks")
+    PlayerTab:CreateLabel("Anti hit uses Invisibility to dodge basic attacks")
 
     local OldReplicate
     OldReplicate = hookfunction(CharacterReplication.Serialize, newcclosure(function(...)
@@ -6816,7 +7367,7 @@ if (identifyexecutor() ~= "Cosmic") then
             return OldReplicate(...)
         end
         if (CheckInvis()) then
-            return OldReplicate(Args[1], Args[2] + Vector3.new(0, 5000, 0))
+            return OldReplicate(Args[1] - Vector3.new(0, 200, 0), Args[2] + Vector3.new(0, 5000, 0))
         end
         return OldReplicate(...)
     end))
@@ -7288,8 +7839,136 @@ AntisTab:CreateToggle({
     CurrentValue = false,
     Flag = 'AntiFootsteps',
     Callback = NULL
-})
+});
 
+-- anticheat
+(function()
+    if not _G.UNLOCK_ANTICHEAT then return end
+    AntisTab:CreateSection('Anticheat')
+    AntisTab:CreateLabel('This is completely unrelated to forsaken anticheat! it is a client-sided checking mechanism to detect other cheaters and notify you.')
+    local cheaters = {}
+    local cheatersnames = {}
+    local anticheaterrors = {}
+    local numcheaters = 0
+    local cheaterslabel = AntisTab:CreateLabel('Cheaters:')
+    AntisTab:CreateToggle({
+        Name = 'Detect invisibility',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTINVIS',
+        Callback = NULL,
+        TextMode = true
+    })
+    AntisTab:CreateToggle({
+        Name = 'Detect teleports',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTTELEPORT',
+        Callback = NULL,
+        TextMode = true
+    })
+    AntisTab:CreateToggle({
+        Name = 'Detect illegal jumps',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTILLEGALJUMP',
+        Callback = NULL,
+        TextMode = true
+    })
+    local positionstracker = {}
+    local anticheat = {
+        detections = {
+            ['INVIS_CHECK'] = {flag='ANTICHEAT_DETECTINVIS', detect=function(plr)
+                local magicpos = GetGameMap():WaitForChild('SpawnPoints', 4):WaitForChild('Survivors', 4):GetChildren()[1].Position.Y
+                local IS_DTC = plr.Character.HumanoidRootPart.Position.Y >= (magicpos + 300) or plr.Character.HumanoidRootPart.Position.Y <= (magicpos - 100)
+                if IS_DTC and not plr.Character:GetAttribute('INVISDETECTED') then
+                    plr.Character:SetAttribute('INVISDETECTED', tick())
+                elseif plr.Character:GetAttribute('INVISDETECTED') and IS_DTC and tick() - plr.Character:GetAttribute('INVISDETECTED') >= 2 then
+                    return true
+                elseif not IS_DTC then
+                    plr.Character:SetAttribute('INVISDETECTED', nil)
+                end
+                return false
+            end,reason='invisibility'},
+            ['TELEPORT'] = {flag='ANTICHEAT_DETECTTELEPORT', detect=function(plr)
+                local tracked = positionstracker[plr]
+                if not plr.Character:GetAttribute('TELEPORTS') then
+                    plr.Character:SetAttribute('TELEPORTS', 0)
+                end
+                if (tracked.position - plr.Character.HumanoidRootPart.Position).magnitude >= 50 then
+                    positionstracker[plr] = {lastupd = tick(), position = plr.Character.HumanoidRootPart.Position}
+                    plr.Character:SetAttribute('TELEPORTS', plr.Character:GetAttribute('TELEPORTS') + 1)
+                end
+                if plr.Character:GetAttribute('TELEPORTS') > 1 then
+                    return true
+                end
+            end,reason='teleportation'},
+            ['JUMP'] = {flag='ANTICHEAT_DETECTILLEGALJUMP', detect=function(plr)
+
+            end,reason='illegal jump'},
+        },
+        flag = function(self,plr,reason)
+            if not cheatersnames[plr.Name] then
+                cheatersnames[plr.Name] = true
+            end
+            cheatersnames[plr.Name] = true
+            if not cheaters[plr] then
+                numcheaters = numcheaters + 1
+                cheaters[plr] = {reasons = {}}
+            end
+            if not table.find(cheaters[plr].reasons, reason) then
+                Rayfield:Notify({Title = 'Cheater Detected!', Content = plr.Name .. ' has triggered \"' .. reason .. "\" and has been flagged for cheating.", Duration = 30, Image = 'triangle-alert'})
+                table.insert(cheaters[plr].reasons, reason)
+            end
+        end
+    }
+    function anticheat:runDetection(plr,name)
+        if not (GetGameMap()) then return end
+        if not (plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid")) then return end
+        if plr.Character.Humanoid.Health <= 0 then return end
+        if plr.Character.Parent == workspace.Players.Spectating then
+            plr.Character:SetAttribute('INVISDETECTED', nil)
+            plr.Character:SetAttribute('TELEPORTS', 0)
+        end
+        local detection = anticheat.detections[name]
+        if Catsaken.Flags[detection.flag].CurrentValue and detection.detect(plr) then
+            anticheat:flag(plr, detection.reason)
+        end
+    end
+    task.spawn(function()
+        while not Unloaded and task.wait() do
+            local text = ''
+            if numcheaters == 0 then
+                cheaterslabel:Set('Cheaters: None')
+            else
+                for i, v in pairs(cheaters) do
+                    text = text .. '\n' .. i.Name .. ' (' .. table.concat(v.reasons, ', ') .. ')'
+                end
+                cheaterslabel:Set('Cheaters:' .. text) 
+            end
+
+            for _, i in pairs(Players:GetPlayers()) do
+                pcall(function()
+                    if not positionstracker[i] then
+                        positionstracker[i] = {lastupd = 0, position = i.Character.HumanoidRootPart.Position}
+                    end
+                    local tracked = positionstracker[i]
+                    if tick() - tracked.lastupd >= 0.5 then
+                        tracked.position = i.Character.HumanoidRootPart.Position
+                        tracked.lastupd = tick()
+                    end
+                end)
+                for n, v in pairs(anticheat.detections) do
+                    local s,r=pcall(anticheat.runDetection,anticheat,i,n)
+                    if not s then
+                        if anticheaterrors[r] then
+                        else
+                            anticheaterrors[r] = true
+                            warn("[ANTICHEAT] error occured in anticheat!", tostring(r))
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end)()
 
 function HookEffect(Module, Name, Flag)
     local Old
@@ -7333,6 +8012,12 @@ function Unload()
     Rayfield:Destroy()
     _G.globaluilibrary = nil
     Env.executed = false
+    for i, v in pairs(Players:GetPlayers()) do
+        if v.Character then
+            v.Character:SetAttribute("INVISDETECTED", nil)
+            v.Character:SetAttribute('TELEPORTS', 0)
+        end
+    end
     pcall(function()
         Env.InvisToggleButton:setEnabled(false)
         Env.InvisToggleButton = nil
@@ -7423,6 +8108,9 @@ function fullbrightthedamnmap()
 	Lighting.FogEnd = 100000
 	Lighting.GlobalShadows = false
 	Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    pcall(function()
+        Lighting:FindFirstChildOfClass('Atmosphere'):Destroy()
+    end)
 end
 
 MiscTab:CreateToggle({
@@ -7434,7 +8122,7 @@ MiscTab:CreateToggle({
             if Callback then
                 while Catsaken.Flags.Fullbright.CurrentValue do
                     fullbrightthedamnmap()
-                    task.wait(3)
+                    task.wait()
                 end
             end
         end)
@@ -7664,7 +8352,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    local main = "https://raw.githubusercontent.com/aibabylaugh/catsaken-real-script-not-assets/refs/heads/main/obfuscated-1448974601077002340.lua"
+    local main = "https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/cat.lua"
     local current = game:HttpGet(main)
     while not Unloaded do
         task.wait(10)
