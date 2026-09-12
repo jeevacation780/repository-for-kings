@@ -40,7 +40,7 @@ writefile("catsakenconfigfix2.txt", "")
 _G.LUNAR_BACKGROUND = "https://github.com/aibabylaugh/catsaken/raw/main/catsakenbg.jpg"
 _G.LUNAR_TITLE = nil
 _G.SINGLE_COLUMNS = false
-_G.UNLOCK_ANTICHEAT = false
+_G.UNLOCK_ANTICHEAT = true
 local Env = getgenv()
 local ShouldUseOldUI = isfile("BOOL_CATSAKEN_OLDUI")
 if Env.executed then
@@ -3651,6 +3651,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
         
         Window.Keybinds = {}
         UserInputService.InputBegan:Connect(function(Input, Gpe)
+            if (Unloaded) then return end
             if Gpe then return end
             for i, v in pairs(Window.Keybinds) do
                 if v.Pressable and v.KeyCode and Input.KeyCode == Enum.KeyCode[v.KeyCode] then
@@ -4204,12 +4205,14 @@ if ShouldUseOldUI then
     AboutTab:CreateLabel("Since you're using on older GUI with a script made to be built on a new GUI, there may be bugs in this version. Report them if you do catch them.")
 else
     AboutTab:CreateSection('Changelog')
-    AboutTab:CreateLabel([[
+    AboutTab:CreateLabel([[-- Pinned --
+• Added cheater-detector (Still work in progress so suggest things to add to the detections!)
 12/09/2026
     • Added custom speed (10-70%)
     • Fixed auto-block still running into killer after missing
     • Fixed auto-block when using certain skins
     • Option to change notification position to top/bottom
+    • Fixed an autofarm generator issue on pirate bay map
 11/09/2026
     • Fixes for broken features
     • Added a prettier notifications UI
@@ -5019,6 +5022,9 @@ function CompleteGenerators()
         for _, Generator in Forsaken.RoundGenerators do
             if (not (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))) then continue end
             function CheckOccupance(Pos)
+                if GetGameMap():GetAttribute('MapName') == 'PirateBay' and Pos == Generator.Positions.Right.Position then
+                    return true
+                end
                 for _, Survivor in Forsaken.Survivors do
                     if (Survivor:FindFirstChild("HumanoidRootPart") and (Survivor.HumanoidRootPart.Position - Pos).Magnitude <= 6 and Survivor ~= LocalPlayer) then
                         return true
@@ -6769,7 +6775,7 @@ end
 function TableFindThatWorks(Haystack, Needle)
     for i, v in Haystack do
         if v == Needle then
-            return true
+            return v
         end
     end
     return false
@@ -6828,16 +6834,124 @@ function SpyStuns(Char)
     end)
 end
 
-function TrackAnimations(Char,IsSurvivor)
+function TrackAnimations(Char,IsSurvivor,IsNew)
     local Root = Char and Char:WaitForChild('HumanoidRootPart', 7)
     if (not Root) then return end
     local Hum = Root and Char:WaitForChild("Humanoid", 7)
     if (not Hum) then return end
     local Animator = Hum:WaitForChild('Animator', 5)
     if (not Animator) then return end
+
+    local stamina
+    local sprinting = false
+    local timeUntilRecover = 0
+    local lastUpdate = tick()
+
+    local function GetConfig()
+        return require((Char.Parent.Name == 'Killers' and MainKillersPath or MainSurvivorsPath)[Char.Name].Config)
+    end
+
+    task.spawn(function()
+        if IsNew then return end
+        lastUpdate = tick()
+        while Char.Parent do
+            if (Unloaded) then break end
+            local now = tick()
+            local dt = now - lastUpdate
+            lastUpdate = now
+
+            local cfg = GetConfig()
+            local StaminaLoss = cfg.StaminaLoss or 10
+            local StaminaGain = cfg.StaminaGain or 20
+            local MaxStamina = cfg.MaxStamina or 100
+
+            if not stamina then
+                stamina = MaxStamina
+            end
+
+            sprinting = Char:GetAttribute('sprinting')
+
+            if sprinting then
+                timeUntilRecover = math.clamp(timeUntilRecover + dt * 0.05, 0.2, 2)
+                stamina = math.clamp(stamina - StaminaLoss * dt, 0, MaxStamina)
+                if stamina <= 0 then
+                    timeUntilRecover = 2
+                end
+            else
+                timeUntilRecover = math.clamp(timeUntilRecover - dt, 0, 2)
+                if timeUntilRecover <= 0 then
+                    stamina = math.clamp(stamina + StaminaGain * dt, 0, MaxStamina)
+                end
+            end
+
+            Char:SetAttribute('estimatedStamina', stamina)
+            task.wait()
+        end
+    end)
+
     Animator.AnimationPlayed:Connect(function(track)
         if (Unloaded) then return end
-        if IsSurvivor and LocalPlayer.Character.Name == 'Guest1337' then
+        local SN = Char:GetAttribute('SkinName')
+        if SN == '' then SN = nil end
+        local defaultcharconfig = GetConfig()
+        local skincharconfig = SN and require(ReplicatedStorage.Assets.Skins[Char.Parent.Name][Char.Name][SN].Config)
+        local runanim1
+        local runanim2
+        if skincharconfig and skincharconfig.Animations and skincharconfig.Animations.InjuredRun then
+            runanim2 = skincharconfig.Animations.InjuredRun
+        else
+            runanim2 = defaultcharconfig.Animations.InjuredRun or "rbxassetid://115946474977409"
+        end
+        if skincharconfig and skincharconfig.Animations and skincharconfig.Animations.Run then
+            runanim1 = skincharconfig.Animations.Run
+        else
+            runanim1 = defaultcharconfig.Animations.Run or "rbxassetid://136252471123500"
+        end
+        if track.Animation.AnimationId == runanim1 or track.Animation.AnimationId == runanim2 then
+            Char:SetAttribute('sprinting', true)
+            Char:SetAttribute("timestartedsprinting", tick())
+            track.Stopped:Once(function()
+                Char:SetAttribute("timestartedsprinting", nil)
+                Char:SetAttribute('sprinting', false)
+            end)
+        end
+        local validblockanim = (skincharconfig and skincharconfig.Animations and skincharconfig.Animations.Block) and skincharconfig.Animations.Block or defaultcharconfig.Animations.Block
+        if TableFindThatWorks(BlockAnims, track.Animation.AnimationId) then
+            task.spawn(function()
+                local foundresistance = false
+                local lbt = Char:GetAttribute('LAST_BLOCK_TIME')
+                
+                while track.IsPlaying and not Unloaded and task.wait() do
+                    if track.Animation.AnimationId ~= validblockanim and not Players[Char:GetAttribute("Username")]:GetAttribute('ILLEGAL_ANIMATION_FLAG') and Catsaken.Flags.ANTICHEAT_DETECTANIMATIONS.CurrentValue then
+                        warn("[Anticheat]", Char:GetAttribute("Username"), " changed block animation!", validblockanim, "->", track.Animation.AnimationId)
+                        Char:SetAttribute('ILLEGAL_ANIMATION_FLAG', true)
+                        Players[Char:GetAttribute("Username")]:SetAttribute('ILLEGAL_ANIMATION_FLAG', true)
+                    end
+                    local rs = Char.ResistanceMultipliers:FindFirstChild('ResistanceStatus')
+                    if rs and rs:GetAttribute('Duration') == 1 and rs.Value == 100 then
+                        foundresistance = true
+                    end
+                end
+                if GetGameMap() and not foundresistance and not Players[Char:GetAttribute("Username")]:GetAttribute('FAKE_BLOCK_FLAG') and Catsaken.Flags.ANTICHEAT_DETECTANIMATIONS.CurrentValue then
+                    warn("[Anticheat]", Char:GetAttribute("Username"), 'committed a fake block (NO resistance status applied)')
+                    Char:SetAttribute('FAKE_BLOCK_FLAG', true)
+                    Players[Char:GetAttribute("Username")]:SetAttribute('FAKE_BLOCK_FLAG', true)
+                elseif foundresistance then
+                    warn("[Anticheat]", Char:GetAttribute("Username"), 'blocked, but it was REAL!')
+                end
+                if ((lbt and tick() - Char:GetAttribute('LAST_BLOCK_TIME') <= 26 and not Players[Char:GetAttribute("Username")]:GetAttribute('FAKE_BLOCK_FLAG') and not ResistanceStatus) or Char.Name ~= 'Guest1337') and Catsaken.Flags.ANTICHEAT_DETECTANIMATIONS.CurrentValue then
+                    if Char.Name ~= 'Guest1337' then
+                        warn("[Anticheat]", Char:GetAttribute("Username"), " committed a fake block! (blocking as non-guest)")
+                    else
+                        warn("[Anticheat]", Char:GetAttribute("Username"), " committed a fake block!", ('%.1f'):format(27 - (tick() - Char:GetAttribute('LAST_BLOCK_TIME'))) .. "s early")
+                    end
+                    Char:SetAttribute('FAKE_BLOCK_FLAG', true)
+                    Players[Char:GetAttribute("Username")]:SetAttribute('FAKE_BLOCK_FLAG', true)
+                end
+                Char:SetAttribute('LAST_BLOCK_TIME', tick())
+            end)
+        end
+        if Char == LocalPlayer.Character and IsSurvivor and Char.Name == 'Guest1337' then
             if TableFindThatWorks(BlockAnims, track.Animation.AnimationId) then
                 IsBlocking = true
                 while track.IsPlaying do
@@ -6849,7 +6963,7 @@ function TrackAnimations(Char,IsSurvivor)
                 IsBlocking = false
             end
         end
-        if IsSurvivor and IsKiller() and LocalPlayer.Character.Name == 'Slasher' then
+        if Char == LocalPlayer.Character and IsSurvivor and IsKiller() and Char.Name == 'Slasher' then
             if not table.find(Forsaken.SentinelAnimations, track.Animation.AnimationId) then return end
             local LRoot = LocalPlayer.Character.HumanoidRootPart
             local TRoot = Char.HumanoidRootPart
@@ -6910,7 +7024,7 @@ function TrackAnimations(Char,IsSurvivor)
 end
 for _, Killer in Forsaken.Killers do
     SpyStuns(Killer)
-    TrackAnimations(Killer)
+    TrackAnimations(Killer,nil,true)
 end
 Killers.ChildAdded:Connect(function(Killer)
     SpyStuns(Killer)
@@ -6918,7 +7032,7 @@ Killers.ChildAdded:Connect(function(Killer)
 end)
 for _, Surv in Forsaken.Survivors do
     if table.find({'Shedletsky', 'TwoTime', 'JaneDoe', 'Guest1337'}, Surv.Name) then
-        TrackAnimations(Surv,true)
+        TrackAnimations(Surv,true,true)
     end
 end
 Survivors.ChildAdded:Connect(function(Surv)
@@ -7885,14 +7999,26 @@ AntisTab:CreateToggle({
     Name = 'Anti footsteps',
     CurrentValue = false,
     Flag = 'AntiFootsteps',
-    Callback = NULL
+    Callback = function()
+        if (Callback) then
+            task.spawn(function()
+                while wait() do
+                    if (LocalPlayer.Character and Catsaken.Flags.AntiFootsteps.CurrentValue) then
+                        LocalPlayer.Character:SetAttribute('FootstepsMuted', true)
+                    end
+                end
+            end)
+        elseif ((not Callback) and LocalPlayer.Character) then
+            LocalPlayer.Character:SetAttribute('FootstepsMuted', false)
+        end
+    end
 });
 
 -- anticheat
 (function()
     if not _G.UNLOCK_ANTICHEAT then return end
     AntisTab:CreateSection('Anticheat')
-    AntisTab:CreateLabel('This is completely unrelated to forsaken anticheat! it is a client-sided checking mechanism to detect other cheaters and notify you.')
+    --AntisTab:CreateLabel('This is completely unrelated to forsaken anticheat! it is a client-sided checking mechanism to detect other cheaters and notify you.')
     local cheaters = {}
     local cheatersnames = {}
     local anticheaterrors = {}
@@ -7919,6 +8045,29 @@ AntisTab:CreateToggle({
         Callback = NULL,
         TextMode = true
     })
+    AntisTab:CreateToggle({
+        Name = 'Detect illegal animations',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTANIMATIONS',
+        Callback = NULL,
+        TextMode = true,
+        ToolTip = 'Detects fake block and animation changers'
+    })
+    AntisTab:CreateToggle({
+        Name = 'Detect stamina modifications',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTSTAMINA',
+        Callback = NULL,
+        TextMode = true
+    })
+    AntisTab:CreateToggle({
+        Name = 'Detect hiddden footsteps',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTFOOTSTEPS',
+        Callback = NULL,
+        TextMode = true,
+        ToolTip = 'Detects players using scripts to hide footstep noises'
+    })
     local positionstracker = {}
     local anticheat = {
         detections = {
@@ -7928,6 +8077,7 @@ AntisTab:CreateToggle({
                 if IS_DTC and not plr.Character:GetAttribute('INVISDETECTED') then
                     plr.Character:SetAttribute('INVISDETECTED', tick())
                 elseif plr.Character:GetAttribute('INVISDETECTED') and IS_DTC and tick() - plr.Character:GetAttribute('INVISDETECTED') >= 2 then
+                    warn("[Anticheat]", plr.Name, "is invisible")
                     return true
                 elseif not IS_DTC then
                     plr.Character:SetAttribute('INVISDETECTED', nil)
@@ -7940,16 +8090,83 @@ AntisTab:CreateToggle({
                     plr.Character:SetAttribute('TELEPORTS', 0)
                 end
                 if (tracked.position - plr.Character.HumanoidRootPart.Position).magnitude >= 50 then
-                    positionstracker[plr] = {lastupd = tick(), position = plr.Character.HumanoidRootPart.Position}
-                    plr.Character:SetAttribute('TELEPORTS', plr.Character:GetAttribute('TELEPORTS') + 1)
+                    if plr.Character.Name == '007n7' and tick() - tracked.c00lguiequip <= 2 then
+                        warn("[Anticheat] Player teleported legitimately using the c00lgui")
+                    else
+                        if GetGameMap():GetAttribute('MapName') == 'ClassicBattlegrounds' and plr.Character.Parent == Killers and (Vector3.new(834, 95, 1498) - plr.Character.HumanoidRootPart.Position).magnitude <= 12 then
+                            warn("[Anticheat] Player teleported legitimately through grate on classic battlegrounds")
+                        else
+                            positionstracker[plr] = {lastupd = tick(), position = plr.Character.HumanoidRootPart.Position, c00lguiequip = tracked.c00lguiequip}
+                            plr.Character:SetAttribute('TELEPORTS', plr.Character:GetAttribute('TELEPORTS') + 1)
+                        end
+                    end
                 end
                 if plr.Character:GetAttribute('TELEPORTS') > 1 then
                     return true
                 end
             end,reason='teleportation'},
             ['JUMP'] = {flag='ANTICHEAT_DETECTILLEGALJUMP', detect=function(plr)
-
+                if plr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+                    warn("[Anticheat] Oh how silly can you be", plr.Name, "to do that in forsaken, like that?")
+                    return true
+                end
             end,reason='illegal jump'},
+            ['STAMINA'] = {flag='ANTICHEAT_DETECTSTAMINA', detect=function(plr)
+                local IsSprinting = plr.Character:GetAttribute("sprinting")
+                local Stamina = plr.Character:GetAttribute("estimatedStamina")
+                if not plr.Character:GetAttribute("STAMINA_FLAGS") then
+                    plr.Character:SetAttribute("STAMINA_FLAGS", 0)
+                end
+                local flaggedbefore = plr.Character:GetAttribute("STAMINA_FLAG_TIME")
+                if IsSprinting and Stamina <= 0 then
+                    if (flaggedbefore and tick() - flaggedbefore >= 2.1) or not flaggedbefore then
+                        warn("[Anticheat]", plr.Name, "flagged for stamina modifications")
+                        plr.Character:SetAttribute("STAMINA_FLAGS", plr.Character:GetAttribute("STAMINA_FLAGS") + 1)
+                        plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
+                    end
+                    if not flaggedbefore then
+                        plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
+                    end
+                    flaggedbefore = plr.Character:GetAttribute("STAMINA_FLAG_TIME")
+                    if tick() - flaggedbefore >= 30 and plr.Character:GetAttribute("STAMINA_FLAGS") > 0 then
+                        warn("[Anticheat] Removing stamina flag from", plr.Name, "for being a good boy")
+                        plr.Character:SetAttribute("STAMINA_FLAGS", plr.Character:GetAttribute("STAMINA_FLAGS") - 1)
+                        plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
+                    end
+                    if plr.Character:GetAttribute("STAMINA_FLAGS") > 2 then
+                        return true
+                    end
+                end
+            end,reason='stamina mods'},
+            ['ANIMATIONS'] = {flag='ANTICHEAT_DETECTANIMATIONS', detect=function(plr)
+                return plr.Character:GetAttribute('ILLEGAL_ANIMATION_FLAG')
+            end,reason='illegal animation'},
+            ['ANIMATIONS2'] = {flag='ANTICHEAT_DETECTANIMATIONS', detect=function(plr)
+                return plr.Character:GetAttribute('FAKE_BLOCK_FLAG')
+            end,reason='fake block'},
+            ['FOOTSTEPS'] = {flag='ANTICHEAT_DETECTFOOTSTEPS', detect=function(plr)
+                local IsSprinting = plr.Character:GetAttribute("sprinting")
+                local R = plr.Character.HumanoidRootPart
+                local footstepnoise
+                if not plr.Character:GetAttribute("FOOTSTEP_FLAGS") then
+                    plr.Character:SetAttribute("FOOTSTEP_FLAGS", 0)
+                end
+                for i, v in ipairs(R:GetChildren()) do
+                    if v.Name:find('footstep') and v:IsA('audio') then
+                        footstepnoise = v
+                    end
+                end
+                if IsSprinting and not footstepnoise then
+                    local ss = plr.Character:GetAttribute("timestartedsprinting")
+                    if ss and tick() - ss >= 3 then
+                        warn("[Anticheat]", plr:GetAttribute('Username'), 'is hiding footsteps')
+                        plr.Character:SetAttribute('FOOTSTEP_FLAGS', plr.Character:GetAttribute('FOOTSTEP_FLAGS') + 1)
+                    end
+                end
+                if plr.Character:GetAttribute('FOOTSTEP_FLAGS') > 5 then
+                    return true
+                end
+            end,reason='hidden footsteps'}
         },
         flag = function(self,plr,reason)
             if not cheatersnames[plr.Name] then
@@ -7972,7 +8189,13 @@ AntisTab:CreateToggle({
         if plr.Character.Humanoid.Health <= 0 then return end
         if plr.Character.Parent == workspace.Players.Spectating then
             plr.Character:SetAttribute('INVISDETECTED', nil)
-            plr.Character:SetAttribute('TELEPORTS', 0)
+            plr.Character:SetAttribute('TELEPORTS', nil)
+            plr.Character:SetAttribute('STAMINA_FLAG_TIME', nil)
+            plr.Character:SetAttribute('STAMINA_FLAGS', nil)
+            plr.Character:SetAttribute('estimatedStamina', nil)
+            plr.Character:SetAttribute('sprinting', nil)
+            plr.Character:SetAttribute('FOOTSTEP_FLAGS', nil)
+            plr.Character:SetAttribute('timestartedsprinting', nil)
         end
         local detection = anticheat.detections[name]
         if Catsaken.Flags[detection.flag].CurrentValue and detection.detect(plr) then
@@ -7994,9 +8217,12 @@ AntisTab:CreateToggle({
             for _, i in pairs(Players:GetPlayers()) do
                 pcall(function()
                     if not positionstracker[i] then
-                        positionstracker[i] = {lastupd = 0, position = i.Character.HumanoidRootPart.Position}
+                        positionstracker[i] = {lastupd = 0, position = i.Character.HumanoidRootPart.Position, c00lguiequip = 0}
                     end
                     local tracked = positionstracker[i]
+                    if i.Character:FindFirstChild('c00lgui') then
+                        tracked.c00lguiequip = tick()
+                    end
                     if tick() - tracked.lastupd >= 0.5 then
                         tracked.position = i.Character.HumanoidRootPart.Position
                         tracked.lastupd = tick()
@@ -8063,6 +8289,16 @@ function Unload()
         if v.Character then
             v.Character:SetAttribute("INVISDETECTED", nil)
             v.Character:SetAttribute('TELEPORTS', 0)
+            v.Character:SetAttribute('STAMINA_FLAG_TIME', nil)
+            v.Character:SetAttribute('STAMINA_FLAGS', nil)
+            v.Character:SetAttribute('estimatedStamina', nil)
+            v.Character:SetAttribute('sprinting', nil)
+            v.Character:SetAttribute('ILLEGAL_ANIMATION_FLAG', nil)
+            v.Character:SetAttribute('FAKE_BLOCK_FLAG', nil)
+            v.Character:SetAttribute('FOOTSTEP_FLAGS', nil)
+            v.Character:SetAttribute('timestartedsprinting', nil)
+            v:SetAttribute('ILLEGAL_ANIMATION_FLAG', nil)
+            v:SetAttribute('FAKE_BLOCK_FLAG', nil)
         end
     end
     pcall(function()
@@ -8567,9 +8803,6 @@ Old = hookmetamethod(game, '__namecall', function(self, ...)
     if (Catsaken.Flags.VoidRushAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. 'VoidRushCollision') and Forsaken.VoidRushTracker) then
         repeat wait() until (tick() - Forsaken.VoidRushTracker >= NoliConfig.VoidRushDashLength)
         return Old(self, unpack(Args))
-    end
-    if (Catsaken.Flags.AntiFootsteps.CurrentValue and Args[1] == "FootSP")  then
-        return;
     end
     if (Catsaken.Flags.NoSprintTween.CurrentValue and not checkcaller() and self == TweenService and getnamecallmethod() == 'Create' and Args[1] == SprintModule.__speedMultiplier) then
         Args[2] = TweenInfo.new(0)
