@@ -44,7 +44,7 @@ _G.UNLOCK_ANTICHEAT = false
 local Env = getgenv()
 local ShouldUseOldUI = isfile("BOOL_CATSAKEN_OLDUI")
 if Env.executed then
-    return Env.Fluent:Notify({Title = "Catsaken", Content = "Already loaded! Trying to reload? Press the button in Miscallenous", Duration = 5})
+    return Env.Rayfield:Notify({Title = "Catsaken", Content = "Already loaded! Trying to reload? Press the button in Miscallenous", Duration = 5})
 end
 Env.executed = true
 
@@ -140,6 +140,7 @@ local IsVelocity = identifyexecutor():lower():find('velocity')
 local CoreGui = game:GetService('CoreGui')
 local ImagesUI = Instance.new('ScreenGui', IsVelocity and CoreGui or gethui())
 local OldWarn = warn
+local IsMobile = UserInputService.TouchEnabled == true and UserInputService.KeyboardEnabled == false
 DoeConfig.CorruptEnergyWindup = 2
 
 function randomstring(l)
@@ -322,6 +323,44 @@ task.spawn(function()
         end)
     end
 end)
+local validatehmm = setmetatable({}, {
+    __call = function(_,...)
+        getgenv().ts90PxMpW2 = function(...)
+            return ...
+        end
+        return 8447461017 + ...
+    end,    
+    __index = function(...)
+        return function(...)
+            return 1159814064, ...
+        end
+    end
+})
+getgenv().xAKmkytYgD = validatehmm
+if not validatehmm(1) == 8447461018 then
+    triggered()
+end
+hookmetamethod(validatehmm, '__call', function()
+    return 2488846905
+end)
+if not validatehmm(0) == 2488846905 then
+    triggered()
+end
+local le_result = {loadstring('local _=getgenv().xAKmkytYgD;return _:_(getgenv().ts90PxMpW2(...));')('Larry Page')}
+if le_result[1] ~= 1159814064 then
+    triggered()
+end
+if le_result[3] ~= 'Larry Page' then
+    triggered()
+end
+if not pcall(function()
+    if le_result[2].b()+5278493606 ~= 6438307670 then
+        error('')
+    end
+end) then
+    triggered()
+end
+
 GuiService.ErrorMessageChanged:Connect(function(message)
     local text = CoreGui:WaitForChild("RobloxPromptGui"):WaitForChild("promptOverlay"):WaitForChild("ErrorPrompt"):WaitForChild("MessageArea"):WaitForChild("ErrorFrame"):WaitForChild("ErrorMessage").Text
     warn(text)
@@ -356,7 +395,6 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 -- entire gui module
 local SaveFileName = (isfile("catsakenautoload.txt") and readfile("catsakenautoload.txt")) or ("catsaken-default-" .. LocalPlayer.Name .. ".json")
 local SaveTable = {}
-local IsMobile = UserInputService.TouchEnabled == true and UserInputService.KeyboardEnabled == false
 local mainuimodule = not ShouldUseOldUI and (function()
     if isfile("catsakenconfigs.json") then
         SaveTable = HttpService:JSONDecode(readfile("catsakenconfigs.json"))[SaveFileName] or {}
@@ -3677,11 +3715,15 @@ local mainuimodule = not ShouldUseOldUI and (function()
         local Layout = Instance.new("UIListLayout")
         Layout.Parent = List
         Layout.SortOrder = Enum.SortOrder.LayoutOrder
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        Layout.VerticalAlignment = Enum.VerticalAlignment.Top
         Layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
         Layout.Padding = UDim.new(0, 8)
 
         NotifList = List
+
+        function Library:ChangeNotificationLayout(new)
+            Layout.VerticalAlignment = Enum.VerticalAlignment[new]
+        end
     end
 
     function Library:Notify(stuff)
@@ -3878,6 +3920,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
     return Library
 end)()
 local Rayfield = mainuimodule or loadstring(game:HttpGet('https://raw.githubusercontent.com/aibabylaugh/catsaken/refs/heads/main/rayfield.lua'))()
+Env.Rayfield = Rayfield
 
 local PrettyPrint = nil--loadstring(game:HttpGet('https://raw.githubusercontent.com/78n/DataToCode/refs/heads/main/main.lua'))().print
 
@@ -4165,7 +4208,8 @@ else
 12/09/2026
     • Added custom speed (10-70%)
     • Fixed auto-block still running into killer after missing
-    • Fixed auto-block bugs relating when using certain skins
+    • Fixed auto-block when using certain skins
+    • Option to change notification position to top/bottom
 11/09/2026
     • Fixes for broken features
     • Added a prettier notifications UI
@@ -6687,10 +6731,11 @@ function Counter(KillerModel, Root, track)
                     stareFunc(KillerModel)
                     if LocalPlayer.Character.HumanoidRootPart:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) or DefaultGuest.Sounds.BlockSuccess) then
                         Success = true
+                        IsBlocking = false
                         Rayfield:Notify({Title = 'Auto Block', Content = 'Successful Block', Duration = 7, Image = 'shield'})
                         break
                     end
-                    if Catsaken.Flags.HitboxDragTech.CurrentValue and tick() - Start <= 0.31 then
+                    if Catsaken.Flags.HitboxDragTech.CurrentValue and tick() - Start <= Forsaken.HitboxesDuration then
                         LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
                     else
                         PlayerControls:Enable()
@@ -6795,8 +6840,10 @@ function TrackAnimations(Char,IsSurvivor)
         if IsSurvivor and LocalPlayer.Character.Name == 'Guest1337' then
             if TableFindThatWorks(BlockAnims, track.Animation.AnimationId) then
                 IsBlocking = true
-                local now = tick()
                 while track.IsPlaying do
+                    if not IsBlocking then
+                        return -- auto-block reset it after a sucessful block
+                    end
                     task.wait()
                 end
                 IsBlocking = false
@@ -7273,8 +7320,8 @@ PlayerTab:CreateToggle({
     Name = 'Stun spy',
     CurrentValue = false,
     Flag = 'StunSpy',
-    Callback = function(cb)
-        if cb then
+    Callback = function(cb,is)
+        if cb and not is then
             Rayfield:Notify({Title = 'Work in progress', Content = 'Stun spy is still a work in progress, so it doesnt detect some stun types YET, it only detects: shedletsky, guest1337, twotime', Duration = 12, Image = 'info'})
         end
     end
@@ -7339,11 +7386,11 @@ if (identifyexecutor() ~= "Cosmic") then
         Name = 'Anti hit',
         CurrentValue = false,
         Flag = 'AntiHit',
-        Callback = function(S)
-            if S and Catsaken.Flags.AutoBackstab.CurrentValue then
+        Callback = function(S,is)
+            if S and Catsaken.Flags.AutoBackstab.CurrentValue and not is then
                 Rayfield:Notify({Title = 'Anti hit', Content = 'Disable this if you want auto backstab to work better', Duration = 6, Image = 'sword'})
             end
-            if S and Catsaken.Flags.AutoBlockToggle.CurrentValue then
+            if S and Catsaken.Flags.AutoBlockToggle.CurrentValue and not is then
                 Rayfield:Notify({Title = 'Anti hit', Content = 'Disable anti hit or auto block wont work', Duration = 6, Image = 'sword'})
             end
         end
@@ -7367,7 +7414,7 @@ if (identifyexecutor() ~= "Cosmic") then
             return OldReplicate(...)
         end
         if (CheckInvis()) then
-            return OldReplicate(Args[1] - Vector3.new(0, 200, 0), Args[2] + Vector3.new(0, 5000, 0))
+            return OldReplicate(Args[1], Args[2] + Vector3.new(0, 5000, 0))
         end
         return OldReplicate(...)
     end))
@@ -8126,6 +8173,23 @@ MiscTab:CreateToggle({
                 end
             end
         end)
+    end
+})
+
+local oldnotif
+MiscTab:CreateDropdown({
+    Name = 'Notifications position',
+    Options = {'Bottom', 'Top'},
+    CurrentOption = {'Bottom'},
+    Flag = 'NotificationLayout',
+    Callback = function(Options,is)
+        pcall(function()
+            oldnotif.Close()
+        end)
+        Rayfield:ChangeNotificationLayout(Options[1])
+        if not is then
+            oldnotif = Rayfield:Notify({Title = 'Example', Content = 'Changed the notification position to ' .. Options[1], Duration = 6, Image = 'info'})
+        end
     end
 })
 
