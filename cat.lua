@@ -8114,6 +8114,7 @@ AntisTab:CreateToggle({
             ['STAMINA'] = {flag='ANTICHEAT_DETECTSTAMINA', detect=function(plr)
                 local IsSprinting = plr.Character:GetAttribute("sprinting")
                 local Stamina = plr.Character:GetAttribute("estimatedStamina")
+                if not Stamina then return end
                 if not plr.Character:GetAttribute("STAMINA_FLAGS") then
                     plr.Character:SetAttribute("STAMINA_FLAGS", 0)
                 end
@@ -8145,6 +8146,7 @@ AntisTab:CreateToggle({
                 return plr.Character:GetAttribute('FAKE_BLOCK_FLAG')
             end,reason='fake block'},
             ['FOOTSTEPS'] = {flag='ANTICHEAT_DETECTFOOTSTEPS', detect=function(plr)
+                if plr.Character.Name == 'Nosferatu' then return false end
                 local IsSprinting = plr.Character:GetAttribute("sprinting")
                 local R = plr.Character.HumanoidRootPart
                 local footstepnoise
@@ -8152,18 +8154,19 @@ AntisTab:CreateToggle({
                     plr.Character:SetAttribute("FOOTSTEP_FLAGS", 0)
                 end
                 for i, v in ipairs(R:GetChildren()) do
-                    if v.Name:find('footstep') and v:IsA('audio') then
+                    if v.Name:find('footstep') and v:IsA('Audio') then
                         footstepnoise = v
                     end
                 end
                 if IsSprinting and not footstepnoise then
                     local ss = plr.Character:GetAttribute("timestartedsprinting")
-                    if ss and tick() - ss >= 3 then
+                    if ss and tick() - ss >= 3 and (not plr.Character:GetAttribute("LAST_FOOTSTEP_FLAG") or tick() - plr.Character:GetAttribute("LAST_FOOTSTEP_FLAG") <= 1)then
                         warn("[Anticheat]", plr:GetAttribute('Username'), 'is hiding footsteps')
+                        plr.Character:SetAttribute("LAST_FOOTSTEP_FLAG", tick())
                         plr.Character:SetAttribute('FOOTSTEP_FLAGS', plr.Character:GetAttribute('FOOTSTEP_FLAGS') + 1)
                     end
                 end
-                if plr.Character:GetAttribute('FOOTSTEP_FLAGS') > 5 then
+                if plr.Character:GetAttribute('FOOTSTEP_FLAGS') > 25 then
                     return true
                 end
             end,reason='hidden footsteps'}
