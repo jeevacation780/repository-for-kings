@@ -8060,14 +8060,14 @@ AntisTab:CreateToggle({
         Callback = NULL,
         TextMode = true
     })
-    AntisTab:CreateToggle({
+    --[[AntisTab:CreateToggle({
         Name = 'Detect hiddden footsteps',
         CurrentValue = true,
         Flag = 'ANTICHEAT_DETECTFOOTSTEPS',
         Callback = NULL,
         TextMode = true,
         ToolTip = 'Detects players using scripts to hide footstep noises'
-    })
+    })]]
     local positionstracker = {}
     local anticheat = {
         detections = {
@@ -8145,7 +8145,7 @@ AntisTab:CreateToggle({
             ['ANIMATIONS2'] = {flag='ANTICHEAT_DETECTANIMATIONS', detect=function(plr)
                 return plr.Character:GetAttribute('FAKE_BLOCK_FLAG')
             end,reason='fake block'},
-            ['FOOTSTEPS'] = {flag='ANTICHEAT_DETECTFOOTSTEPS', detect=function(plr)
+            --[[['FOOTSTEPS'] = {flag='ANTICHEAT_DETECTFOOTSTEPS', detect=function(plr)
                 if plr.Character.Name == 'Nosferatu' then return false end
                 local IsSprinting = plr.Character:GetAttribute("sprinting")
                 local R = plr.Character.HumanoidRootPart
@@ -8169,7 +8169,7 @@ AntisTab:CreateToggle({
                 if plr.Character:GetAttribute('FOOTSTEP_FLAGS') > 25 then
                     return true
                 end
-            end,reason='hidden footsteps'}
+            end,reason='hidden footsteps'}]]
         },
         flag = function(self,plr,reason)
             if not cheatersnames[plr.Name] then
