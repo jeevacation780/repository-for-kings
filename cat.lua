@@ -8199,6 +8199,7 @@ AntisTab:CreateToggle({
             plr.Character:SetAttribute('sprinting', nil)
             plr.Character:SetAttribute('FOOTSTEP_FLAGS', nil)
             plr.Character:SetAttribute('timestartedsprinting', nil)
+            return
         end
         local detection = anticheat.detections[name]
         if Catsaken.Flags[detection.flag].CurrentValue and detection.detect(plr) then
