@@ -302,7 +302,7 @@ local function CreateConfig(config)
             Save.BackgroundColor3 = Color3.fromRGB(65, 190, 130)
 
             SetStatus(
-                "Saved " .. tostring(config.name) .. " to catsakenconfigs.json.",
+                "Saved - Press refresh list and select the config name, then press load selected.",
                 Color3.fromRGB(80, 220, 180)
             )
 
