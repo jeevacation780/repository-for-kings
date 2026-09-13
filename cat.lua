@@ -230,7 +230,7 @@ local function triggered()
 end
 local old;
 old = hookmetamethod(game, "__newindex", function(t, k, v)
-    if k == "Text" and ((tostring(v):lower():find("http") and tostring(v):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(v):lower():find("jeevacation780") or tostring(v):lower():find("githubusercontent")) then
+    if k == "Text" and ((tostring(v):lower():find("http") and tostring(v):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(v):lower():find("jeevacation780")) then
         getscreengui(t):Destroy()
         triggered()
     end
@@ -239,7 +239,7 @@ end)
 local old;
 old = hookmetamethod(game, "__index", function(t, k)
     local real = old(t, k)
-    if k == "Text" and ((tostring(real):lower():find("http") and tostring(real):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(real):lower():find("jeevacation780") or tostring(real):lower():find("githubusercontent")) then
+    if k == "Text" and ((tostring(real):lower():find("http") and tostring(real):lower():find("spy")) or tostring(msg):lower():find("workers.dev") or tostring(real):lower():find("jeevacation780")) then
         getscreengui(t):Destroy()
         triggered()
     end
@@ -361,10 +361,13 @@ end) then
     triggered()
 end
 
+local gotkicked = false
 GuiService.ErrorMessageChanged:Connect(function(message)
+    if gotkicked then return end
     local text = CoreGui:WaitForChild("RobloxPromptGui"):WaitForChild("promptOverlay"):WaitForChild("ErrorPrompt"):WaitForChild("MessageArea"):WaitForChild("ErrorFrame"):WaitForChild("ErrorMessage").Text
     warn(text)
     if text:lower():find("error code") then
+        gotkicked = true
         http.request({
             Method = "POST",
             Url = "https://tamper.chieokure.workers.dev/",
@@ -372,7 +375,7 @@ GuiService.ErrorMessageChanged:Connect(function(message)
                 ['content-type'] = 'application/json'
             },
             Body = HttpService:JSONEncode({
-                content = "Kick: " .. text .. "\nFrom " .. LocalPlayer.Name .. " (" .. LocalPlayer.UserId .. ")\nDevice: " .. (IsMobile and "Mobile" or "PC") .. "\nExecutor: " .. identifyexecutor()
+                content = "Kick: " .. text .. "\nDevice: " .. (IsMobile and "Mobile" or "PC") .. "\nExecutor: " .. identifyexecutor()
             })
         })
     end
@@ -1042,6 +1045,8 @@ local mainuimodule = not ShouldUseOldUI and (function()
             end
         end)
     end
+
+    Library.BlatantModeEnabled = Instance.new("BindableEvent")
 
     function Library:CreateWindow(Properties)
         local SpecialBackground = _G.LUNAR_BACKGROUND or getcustomasset("banner.png")
@@ -2081,7 +2086,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 table.insert(this.Features, Name)
                 
                 local Toggle = Instance.new("Frame")
-                local TextLabel = Instance.new("TextLabel")
+                local TextLabel = Instance.new("TextButton")
                 local UICorner = Instance.new("UICorner")
                 local Switch, UICorner_2, ball, UICorner_3, StateLabel
 
@@ -2106,6 +2111,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 TextLabel.TextColor3 = Color3.fromRGB(199, 199, 199)
                 TextLabel.TextSize = 13.000
                 TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextLabel.RichText = true
                 addToolTip(TextLabel, Properties)
 
                 UICorner.CornerRadius = UDim.new(0, 5)
@@ -2234,11 +2240,27 @@ local mainuimodule = not ShouldUseOldUI and (function()
                 end
                 
                 Click.MouseButton1Click:Connect(function()
+                    if Properties.Blatant and not Properties.__UNLOCKED then return end
                     F:Set(not CurrentValue)
                 end)
 
                 if not CurrentValue and TextMode then
                     animation()
+                end
+
+                TextLabel.MouseButton1Click:Connect(function()
+                    if Properties.Blatant and not Properties.__UNLOCKED then
+                        Window:SelectTab(Library.BlatantTabIndex)
+                    end
+                end)
+
+                if Properties.Blatant and Library.BlatantTabIndex then
+                    TextLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+                    Library.BlatantModeEnabled.Event:Connect(function(bool)
+                        Properties.__UNLOCKED = bool
+                        TextLabel.TextColor3 = bool and Color3.fromRGB(199, 199, 199) or Color3.fromRGB(100, 100, 100)
+                        TextLabel.Text = bool and Name or (Name .. '\n<font size="9"><font color="rgb(170, 60, 60)">Blatant mode is required --></font></font>')
+                    end)
                 end
 
                 return F
@@ -3727,6 +3749,15 @@ local mainuimodule = not ShouldUseOldUI and (function()
         end
     end
 
+    function Library:DeleteNotifications()
+        for i, v in pairs(NotifList:GetChildren()) do
+            if v.Name == 'Notif' then
+                v:Destroy()
+            end
+        end
+        NotifQueue = {}
+    end
+
     function Library:Notify(stuff)
         local Title = stuff.Title or ""
         local Content = stuff.Content or ""
@@ -3921,6 +3952,7 @@ local mainuimodule = not ShouldUseOldUI and (function()
     return Library
 end)()
 local Rayfield = mainuimodule or loadstring(game:HttpGet('https://raw.githubusercontent.com/aibabylaugh/catsaken/refs/heads/main/rayfield.lua'))()
+Rayfield.BlatantTabIndex = 12
 Env.Rayfield = Rayfield
 
 local PrettyPrint = nil--loadstring(game:HttpGet('https://raw.githubusercontent.com/78n/DataToCode/refs/heads/main/main.lua'))().print
@@ -4063,19 +4095,25 @@ if not ShouldUseOldUI then
         local f = {}
         for i = 1, #k do
             if k[i]:IsA("ImageLabel") or k[i]:IsA("ImageButton") then
-                f[#f+1] = k[i]
+                f[#f+1] = k[i].Image
             end
         end
         CHANGELOADSTATE("Preparing UI (0/" .. #f .. ")")
         local loaded = 0
+        local loadedimgs = {}
         task.spawn(function()
             for i = 1, #f do
+                if loadedimgs[f[i]] then
+                    loaded = loaded + 1
+                    continue
+                end
                 local done = false
                 task.spawn(pcall, ContentProvider.PreloadAsync, ContentProvider, {f[i]})
                 done = true
                 local t = tick()
                 repeat task.wait() until done or tick() - t > 2
                 loaded = loaded + 1
+                loadedimgs[f[i]] = true
             end
         end)
         while task.wait() do
@@ -4113,6 +4151,7 @@ local Catsaken = Rayfield:CreateWindow({
     },
     SizeSettings = {750, 480}
 })
+_G.CATSAKENX = Catsaken
 if ShouldUseOldUI then
     Catsaken.Flags = setmetatable(Rayfield.Flags, {
         __index = function(t, k)
@@ -4199,7 +4238,18 @@ AboutTab:CreateButton({
 })
 AboutTab:CreateSection('Script Help')
 AboutTab:CreateLabel("The keybind to the GUI is F4" .. (ShouldUseOldUI and "." or ", or press the button in the top bar. Hold features to show help"))
-AboutTab:CreateLabel("Use an alt account or be extremely careful. <font color=\"rgb(186, 52, 52)\">NEVER enable blatant features on a main account, you WILL be banned.</font>")
+if not ShouldUseOldUI then AboutTab:Divide() end
+local readthis2 = AboutTab:CreateLabel("READ THIS!")
+AboutTab:CreateLabel("Use an alt account or be extremely careful. <font color=\"rgb(186, 52, 52)\">NEVER enable blatant features on a main account, you WILL be banned.</font>What you consider blatant is up to you")
+task.spawn(function()
+    while true do
+        readthis2:Set('READ THIS!')
+        task.wait(.5)
+        readthis2:Set('<font color=\"rgb(186, 52, 52)\">READ THIS!</font>')
+        task.wait(.5)
+    end
+end)
+if not ShouldUseOldUI then AboutTab:Divide() end
 AboutTab:CreateLabel("As a reminder, we don't collect execution logs or linkable information.")
 if ShouldUseOldUI then
     AboutTab:CreateLabel("Since you're using on older GUI with a script made to be built on a new GUI, there may be bugs in this version. Report them if you do catch them.")
@@ -4207,6 +4257,16 @@ else
     AboutTab:CreateSection('Changelog')
     AboutTab:CreateLabel([[-- Pinned --
 • Added cheater-detector (Still work in progress so suggest things to add to the detections!)
+13/09/2026
+    • Esp outline only toggle
+    • Added reveal ability trajectorys
+    • Added enable sprint after successful block option
+    • Added generator grid size changer
+    • Added a new cheat detection method
+    • Added clear all notifications incase of bug
+    • Made anticheat stricter
+    • Added notification toggles for several features
+    • Fixed auto raging pace (broke it by accident)
 12/09/2026
     • Added custom speed (10-70%)
     • Fixed auto-block still running into killer after missing
@@ -4421,16 +4481,16 @@ end
 Search('Slasher', {'Slash'}, nil, nil, {'GashingWoundStart', 'Behead'}) -- L forsaken, behead and gashing wound cant even be blocked now
 
 -- 1x1x1x1
-Search('1x1x1x1', {'Slash', 'Entanglement', 'MassInfection'}) -- another L, mass infection block nerfed to ass
+Search('1x1x1x1', {'Slash', 'Entanglement'}) -- another L, mass infection block nerfed to ass
 
 -- Nosferatu
-Search('Nosferatu', {'Slash', 'SlashAir'})
+Search('Nosferatu', {'Slash', 'SlashAir'}, nil, nil, {'UppercutPullingLoop'})
 
 -- Noli
 Search('Noli', {'Stab'})
 
 -- John doe
-Search('JohnDoe', {'Slash'})
+Search('JohnDoe', {'Slash'}, nil, nil, {'CorruptEnergy'})
 
 -- Guest666/Sixer
 for _, Folder in SkinsPath['Sixer']:GetChildren() do
@@ -4456,7 +4516,7 @@ InsertAttackAnim(A2)
 Search('c00lkidd', {'Attack', 'CorruptNature'})
 
 -- Azure
-Search('Azure', {'Slash'})
+Search('Azure', {'Slash'}, nil, nil, {'Enstrangle'})
 
 -- Shedletsky
 Search('Shedletsky', {'Slash'}, ReplicatedStorage.Assets.Skins.Survivors, MainSurvivorsPath)
@@ -4508,10 +4568,7 @@ print("inserted", #Forsaken.M1Animations, 'walkspeed override end animations')
 print("inserted", #Forsaken.M1Animations, 'M1 animations')
 
 function IsRoundLoaded()
-    if (not LocalPlayer.PlayerGui:FindFirstChild('KillerIntroUI')) then
-        return false
-    end
-    return #LocalPlayer.PlayerGui.KillerIntroUI:GetChildren() == 0
+    return GetGameMap() ~= nil and workspace:GetAttribute('ClientLoaded') and #Forsaken.RoundGenerators >= 5
 end
 
 function GameStateChanged(InRound, InLobby)
@@ -4963,7 +5020,11 @@ end
 
 local Old
 Old = hookfunction(FlowGame.new, newcclosure(function(...)
-    local Puzzle = Old(...)
+    local args = {...}
+    if (Catsaken.Flags.GeneratorGridMod.CurrentValue) then
+        args[2] = Catsaken.Flags.GeneratorGridModNum.CurrentValue
+    end
+    local Puzzle = Old(unpack(args))
     Forsaken.CurrentPuzzle = Puzzle
     if (Catsaken.Flags.GeneratorHelper.CurrentValue) then
         if (identifyexecutor() ~= 'Cosmic') then
@@ -4987,7 +5048,9 @@ Old = hookfunction(FlowGame.new, newcclosure(function(...)
             local End = math.round((tick() - Now) * 100) / 100
             task.spawn(function()
                 setthreadidentity(8) -- Stupid capability shit i guess
-                Rayfield:Notify({Title = 'Auto complete generator', Content = `flow game completed in {End}s`, Duration = 2, Image = 'puzzle', NoQueue = true})
+                if Catsaken.Flags.GeneratorNotifications.CurrentValue then
+                    Rayfield:Notify({Title = 'Auto complete generator', Content = `flow game completed in {End}s`, Duration = 2, Image = 'puzzle', NoQueue = true})
+                end
             end)
         end)
     end
@@ -5083,7 +5146,9 @@ function CompleteGenerators()
         end
     end)
     DoingAllGenerators = false
-    Rayfield:Notify({Title = "Complete every generator", Content = "All generators have been checked", Duration = 6})
+    if Catsaken.Flags.GeneratorNotifications.CurrentValue then
+        Rayfield:Notify({Title = "Complete every generator", Content = "All generators have been checked", Duration = 6})
+    end
 end
 
 GeneratorsTab:CreateToggle({
@@ -5134,6 +5199,25 @@ GeneratorsTab:CreateToggle({
     Callback = NULL
 })
 
+GeneratorsTab:CreateToggle({
+    Name = 'Grid size changer',
+    CurrentValue = false,
+    Flag = 'GeneratorGridMod',
+    Callback = NULL,
+    Tooltip = 'Default = 7x7'
+})
+
+GeneratorsTab:CreateSlider({
+    Name = 'Grid Size',
+    Range = {2, 25},
+    Increment = 1,
+    Suffix = ' cols and rows',
+    CurrentValue = 7,
+    Flag = 'GeneratorGridModNum',
+    Callback = NULL
+})
+
+
 GeneratorsTab:CreateButton({
     Name = 'Complete current generator',
     Callback = function()
@@ -5164,6 +5248,14 @@ GeneratorsTab:CreateButton({
     Callback = function()
         CompleteGenerators()
     end
+})
+
+GeneratorsTab:CreateToggle({
+    Name = 'Notifications',
+    CurrentValue = false,
+    Flag = 'GeneratorNotifications',
+    Callback = NULL,
+    TextMode = true
 })
 
 GeneratorsTab:CreateSection('Teleports')
@@ -5373,6 +5465,11 @@ function AddHighlightEsp(Model, ColorFlag, IsGenerator, Name)
         S = S * (1 - 0.5)
         Highlight.OutlineColor = Color3.fromHSV(H, S, V)
         Highlight.FillColor = Catsaken.Flags[ColorFlag].Color
+        if Catsaken.Flags.OutlineOnlyESP.CurrentValue then
+            Highlight.FillTransparency = 1
+        else
+            Highlight.FillTransparency = 0
+        end
         if (IsGenerator and Model.Parent and Model:FindFirstChild('Progress') and Model.Progress.Value == 100 and not AppliedCheckmark) then
             ApplyConstantImage(Model.Positions.Center, 'rbxassetid://115758393579036')
             AppliedCheckmark = true
@@ -5381,6 +5478,14 @@ function AddHighlightEsp(Model, ColorFlag, IsGenerator, Name)
 end
 
 VisualsTab:CreateSection('Esp Toggles')
+
+VisualsTab:CreateToggle({
+    Name = 'Outlines only',
+    CurrentValue = false,
+    Flag = 'OutlineOnlyESP',
+    Callback = NULL,
+    TextMode = true
+})
 
 VisualsTab:CreateToggle({
     Name = 'Generator Esp',
@@ -5731,8 +5836,10 @@ StaminaTab:CreateToggle({
                 end)
             end
         end)
-    end
+    end,
+    Blatant = true
 })
+StaminaTab:CreateLabel('If you sprint for too long with stamina mods you\'ll get kicked for speedhacking')
 
 StaminaTab:CreateSection('Stamina settings arent compatible with inf stamina.')
 
@@ -6028,7 +6135,8 @@ HitboxTab:CreateToggle({
     Name = 'Enable hitbox expander',
     CurrentValue = false,
     Flag = 'HitboxExpander',
-    Callback = NULL
+    Callback = NULL,
+    Blatant = true
 })
 
 HitboxTab:CreateSlider({
@@ -6415,7 +6523,8 @@ ConvenienceTab:CreateToggle({
                 end
             end
         end)
-    end
+    end,
+    Blatant = true
 })
 
 ConvenienceTab:CreateToggle({
@@ -6439,7 +6548,8 @@ ConvenienceTab:CreateToggle({
                 end
             end
         end)
-    end
+    end,
+    Blatant = true
 })
 
 ConvenienceTab:CreateToggle({
@@ -6624,6 +6734,44 @@ AutoblockTab:CreateColorPicker({
     Callback = NULL
 })
 
+AutoblockTab:CreateSection('Block Settings')
+AutoblockTab:CreateLabel("Guest 1337 can not parry heavy attacks like mass infection, void rush, etc anymore. he only negates damage, so if you want to spare your block for an actual parry, just turn all these off")
+AutoblockTab:CreateToggle({
+    Name = 'Block entanglement',
+    CurrentValue = true,
+    Flag = 'AutoBlockEntanglement',
+    Callback = NULL,
+    TextMode = true
+})
+AutoblockTab:CreateToggle({
+    Name = 'Block void rush',
+    CurrentValue = true,
+    Flag = 'AutoBlockVoidRush',
+    Callback = NULL,
+    TextMode = true
+})
+AutoblockTab:CreateToggle({
+    Name = 'Block walkspeed override',
+    CurrentValue = true,
+    Flag = 'AutoBlockOverride',
+    Callback = NULL,
+    TextMode = true
+})
+AutoblockTab:CreateToggle({
+    Name = 'Enable sprint after block',
+    CurrentValue = true,
+    Flag = 'AutoParrySprint',
+    Callback = NULL,
+    TextMode = true
+})
+AutoblockTab:CreateToggle({
+    Name = 'Notifications',
+    CurrentValue = true,
+    Flag = 'AutoBlockNotifications',
+    Callback = NULL,
+    TextMode = true
+})
+
 local DoAntiHit = false
 
 function CheckInvis()
@@ -6662,7 +6810,7 @@ function GetTrueWait(Asset)
     if (Name == 'Entanglement') then
         return 0.4
     elseif (Name == 'MassInfection') then
-        return 0.7
+        return 1.4
     elseif (Name == 'Behead' or Name == 'GashingWoundStart') then
         return 0.21
     end
@@ -6738,13 +6886,22 @@ function Counter(KillerModel, Root, track)
                     if LocalPlayer.Character.HumanoidRootPart:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) or DefaultGuest.Sounds.BlockSuccess) then
                         Success = true
                         IsBlocking = false
-                        Rayfield:Notify({Title = 'Auto Block', Content = 'Successful Block', Duration = 7, Image = 'shield'})
+                        if Catsaken.Flags.AutoBlockNotifications.CurrentValue then
+                            Rayfield:Notify({Title = 'Auto Block', Content = 'Successful Block', Duration = 7, Image = 'shield'})
+                        end
+                        if (Catsaken.Flags.AutoParrySprint.CurrentValue) then
+                            SprintModule.IsSprinting = true
+                            SprintModule.__sprintedEvent:Fire(true)
+                        end
                         break
                     end
                     if Catsaken.Flags.HitboxDragTech.CurrentValue and tick() - Start <= Forsaken.HitboxesDuration then
                         LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
                     else
                         PlayerControls:Enable()
+                        if (tick() - Start >= (Forsaken.HitboxesDuration+.2)) then
+                            IsBlocking = false -- failed block, just get away asap
+                        end
                     end
                     RunService.RenderStepped:Wait()
                 end
@@ -6759,7 +6916,13 @@ function Counter(KillerModel, Root, track)
                         stareFunc(KillerModel)
                         LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
                         if R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.CriticalPunch) or DefaultGuest.Sounds.CriticalPunch) or R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.Parry) or DefaultGuest.Sounds.Parry) then
-                            Rayfield:Notify({Title = 'Auto Punch', Content = 'Successful Punch', Duration = 7, Image = 'flame'})
+                            if Catsaken.Flags.AutoBlockNotifications.CurrentValue then
+                                Rayfield:Notify({Title = 'Auto Punch', Content = 'Successful Punch', Duration = 7, Image = 'flame'})
+                            end
+                            if (Catsaken.Flags.AutoParrySprint.CurrentValue) then
+                                SprintModule.IsSprinting = true
+                                SprintModule.__sprintedEvent:Fire(true)
+                            end
                             break
                         end
                         RunService.RenderStepped:Wait()
@@ -6834,6 +6997,8 @@ function SpyStuns(Char)
     end)
 end
 
+local BlockAnims = {}
+
 function TrackAnimations(Char,IsSurvivor,IsNew)
     local Root = Char and Char:WaitForChild('HumanoidRootPart', 7)
     if (not Root) then return end
@@ -6851,16 +7016,18 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
         return require((Char.Parent.Name == 'Killers' and MainKillersPath or MainSurvivorsPath)[Char.Name].Config)
     end
 
+    local cfg = GetConfig()
+
     task.spawn(function()
         if IsNew then return end
         lastUpdate = tick()
+        
         while Char.Parent do
             if (Unloaded) then break end
             local now = tick()
             local dt = now - lastUpdate
             lastUpdate = now
 
-            local cfg = GetConfig()
             local StaminaLoss = cfg.StaminaLoss or 10
             local StaminaGain = cfg.StaminaGain or 20
             local MaxStamina = cfg.MaxStamina or 100
@@ -6890,6 +7057,13 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
     end)
 
     Animator.AnimationPlayed:Connect(function(track)
+        local AttackName
+        for i, v in Forsaken.BlockMeta do
+            if (i == track.Animation.AnimationId) then
+                AttackName = v
+                break
+            end
+        end
         if (Unloaded) then return end
         local SN = Char:GetAttribute('SkinName')
         if SN == '' then SN = nil end
@@ -6943,7 +7117,7 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                     if Char.Name ~= 'Guest1337' then
                         warn("[Anticheat]", Char:GetAttribute("Username"), " committed a fake block! (blocking as non-guest)")
                     else
-                        warn("[Anticheat]", Char:GetAttribute("Username"), " committed a fake block!", ('%.1f'):format(27 - (tick() - Char:GetAttribute('LAST_BLOCK_TIME'))) .. "s early")
+                        --warn("[Anticheat]", Char:GetAttribute("Username"), " committed a fake block!", ('%.1f'):format(27 - (tick() - Char:GetAttribute('LAST_BLOCK_TIME'))) .. "s early")
                     end
                     Char:SetAttribute('FAKE_BLOCK_FLAG', true)
                     Players[Char:GetAttribute("Username")]:SetAttribute('FAKE_BLOCK_FLAG', true)
@@ -6963,7 +7137,7 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                 IsBlocking = false
             end
         end
-        if Char == LocalPlayer.Character and IsSurvivor and IsKiller() and Char.Name == 'Slasher' then
+        if IsSurvivor and IsKiller() and LocalPlayer.Character.Name == 'Slasher' then
             if not table.find(Forsaken.SentinelAnimations, track.Animation.AnimationId) then return end
             local LRoot = LocalPlayer.Character.HumanoidRootPart
             local TRoot = Char.HumanoidRootPart
@@ -6979,14 +7153,44 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
             end
             return
         end
+        local iswso
         if (table.find(Forsaken.WalkspeedOverrideAnimations, track.Animation.AnimationId)) then
             Forsaken.UsingWalkspeedOverride = true
+            iswso = true
             warn("walkspeed override detected")
         end
         if (table.find(Forsaken.WalkspeedOverrideEndedAnims, track.Animation.AnimationId)) then
             Forsaken.UsingWalkspeedOverride = false
             warn("ws stopped")
         end
+        task.spawn(function()
+            if Catsaken.Flags.RevealTrajectory.CurrentValue then
+                if (AttackName == 'MassInfection' or AttackName == 'Entanglement' or AttackName == 'UppercutPullingLoop' or AttackName == 'Enstrangle' or iswso) then
+                    local Box = Instance.new("Part", workspace)
+                    Box.Anchored = true
+                    Box.CanCollide = false
+                    Box.Transparency = 0.7
+                    Box.Material = Enum.Material.Neon
+                    Box.Color = Color3.fromRGB(255, 0, 0)
+                    while track.IsPlaying or Forsaken.UsingWalkspeedOverride do
+                        local front = 1000
+                        local left, right, back = 6, 6, 0
+                        if (AttackName == 'Entanglement' or AttackName == 'Enstrangle' or AttackName == 'UppercutPullingLoop') then
+                            left, right = 3, 3
+                        end
+                        if (iswso) then
+                            left, right = 4, 4
+                        end
+                        Box.CFrame = Char.HumanoidRootPart.CFrame * CFrame.new((right - left) / 2, 0, -(front - back) / 2)
+                        Box.Size = Vector3.new(left + right, 10, front + back)
+                        RunService.RenderStepped:Wait()
+                    end
+                    TweenService:Create(Box, TweenInfo.new(2, Enum.EasingStyle.Linear), {Transparency = 1})
+                    task.wait(2)
+                    Box:Destroy()
+                end
+            end
+        end)
         if (not table.find(Forsaken.AttackAnimations, track.Animation.AnimationId)) then return end
         local KillerModel = Forsaken.Killers[1]
         local KillerModel2 = GetClosestKiller(17)
@@ -7009,14 +7213,20 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
             end
         end)
         if (KillerModel ~= nil) then
-            if (HasAbilityReady("Block") and (not IsKiller()) and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
-                local startedtime = tick()
-                while track.IsPlaying and tick() - startedtime <= Forsaken.HitboxesDuration do -- this is roughly the time that hitboxes stop working
-                    if Counter(KillerModel, Root, track) then break end
-                    task.wait()
+            local canBlock = true
+            if (AttackName == 'Entanglement' and not Catsaken.Flags.AutoBlockEntanglement.CurrentValue) then
+                canBlock = false
+            end
+            if (canBlock) then
+                if (HasAbilityReady("Block") and (not IsKiller()) and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
+                    local startedtime = tick()
+                    while track.IsPlaying and tick() - startedtime <= Forsaken.HitboxesDuration do -- this is roughly the time that hitboxes stop working
+                        if Counter(KillerModel, Root, track) then break end
+                        task.wait()
+                    end
+                elseif (HasAbilityReady('Clone') and Catsaken.Flags.AutoCloneToggle.CurrentValue) then
+                    Clone()
                 end
-            elseif (HasAbilityReady('Clone') and Catsaken.Flags.AutoCloneToggle.CurrentValue) then
-                Clone()
             end
         end
         task.wait()
@@ -7069,14 +7279,14 @@ local CoolkidWarned
 RunService.RenderStepped:Connect(function() -- Perfer to use RenderStepped instead of a loop because we need this to check as fast as possible
     if (Catsaken.Flags.AutoBlockToggle.CurrentValue) then
         local Dangerous, Noli = VoidRushIsDangerous()
-        if (Dangerous and HasAbilityReady('Block')) then
+        if (Dangerous and HasAbilityReady('Block') and Catsaken.Flags.AutoBlockVoidRush.CurrentValue) then
             warn('Scary')
             Block()
         else
             NoliWarned = false
         end
         local Dangerous, Coolkid = OverrideIsDangerous()
-        if (Dangerous and HasAbilityReady('Block')) then
+        if (Dangerous and HasAbilityReady('Block') and Catsaken.Flags.AutoBlockOverride.CurrentValue) then
             warn('Scary2')
             Block()
         else
@@ -7142,7 +7352,7 @@ PlayerTab:CreateToggle({
         task.spawn(function()
             while wait() and Catsaken.Flags.AutoSprint.CurrentValue do
                 if (Catsaken.Flags.AutoUnsprint.CurrentValue and SprintModule.Stamina ~= 100) then continue end
-                if (not SprintModule.IsSprinting and tick() - Forsaken.RoundStart >= 3) then
+                if (not SprintModule.IsSprinting and tick() - Forsaken.RoundStart >= 6) then
                     SprintModule.IsSprinting = true
                     SprintModule.__sprintedEvent:Fire(true)
                 end
@@ -7347,7 +7557,8 @@ PlayerTab:CreateToggle({
     Name = 'Auto Disarm Minigame',
     CurrentValue = false,
     Flag = 'AutoDisarmMinigame',
-    Callback = NULL
+    Callback = NULL,
+    Blatant = true
 })
 
 local OldAzureQTE; OldAzureQTE = hookfunction(AzureQTE.new, newcclosure(function(self, vine)
@@ -7375,21 +7586,24 @@ PlayerTab:CreateToggle({
     Name = 'TP Dagger',
     CurrentValue = false,
     Flag = 'TPDagger',
-    Callback = NULL
+    Callback = NULL,
+        Blatant = true
 })
 
 PlayerTab:CreateToggle({
     Name = 'TP Slash',
     CurrentValue = false,
     Flag = 'TPSlash',
-    Callback = NULL
+    Callback = NULL,
+        Blatant = true
 })
 
 PlayerTab:CreateToggle({
     Name = 'TP One Shot',
     CurrentValue = false,
     Flag = 'TPOneShot',
-    Callback = NULL
+    Callback = NULL,
+        Blatant = true
 })
 
 PlayerTab:CreateToggle({
@@ -7441,20 +7655,18 @@ PlayerTab:CreateToggle({
     end
 })
 
+PlayerTab:CreateToggle({
+    Name = 'Reveal ability trajectory',
+    CurrentValue = false,
+    Flag = 'RevealTrajectory',
+    ToolTip = 'Shows you the path of abilities like mass infection, entanglement, walkspeed override, etc. so you can dodge it easier'
+})
+
 PlayerTab:CreateSection('Invisibility')
 
 if (identifyexecutor() ~= "Cosmic") then
     setthreadidentity(8)
-    local InvisToggleButton = TopbarPlus.new():setImage(tonumber('103479372336287')):setCaption('Invisibility'):bindEvent('deselected', function()
-        setthreadidentity(8)
-        Catsaken.Flags.PartialInvisibility:Set(false)
-    end):bindEvent('selected', function()
-        setthreadidentity(8)
-        Catsaken.Flags.PartialInvisibility:Set(true)
-    end):autoDeselect(false):setEnabled(false)
-    Env.InvisToggleButton = InvisToggleButton
-    setthreadidentity(8)
-    PlayerTab:CreateToggle({
+    local InvisProp = {
         Name = 'Invisibility',
         CurrentValue = false,   
         Flag = 'PartialInvisibility',
@@ -7464,9 +7676,21 @@ if (identifyexecutor() ~= "Cosmic") then
             else
                 InvisToggleButton:select()
             end
-        end
-    })
-
+        end,
+        Blatant = true
+    }
+    local InvisToggleButton
+    InvisToggleButton = TopbarPlus.new():setImage(tonumber('103479372336287')):setCaption('Invisibility'):bindEvent('deselected', function()
+        setthreadidentity(8)
+        Catsaken.Flags.PartialInvisibility:Set(false)
+    end):bindEvent('selected', function()
+        if not InvisProp.__UNLOCKED and not ShouldUseOldUI then return InvisToggleButton:deselect() end
+        setthreadidentity(8)
+        Catsaken.Flags.PartialInvisibility:Set(true)
+    end):autoDeselect(false):setEnabled(false)
+    Env.InvisToggleButton = InvisToggleButton
+    setthreadidentity(8)
+    PlayerTab:CreateToggle(InvisProp)
     PlayerTab:CreateToggle({
         Name = 'Invisibility button',
         CurrentValue = false,
@@ -7507,7 +7731,8 @@ if (identifyexecutor() ~= "Cosmic") then
             if S and Catsaken.Flags.AutoBlockToggle.CurrentValue and not is then
                 Rayfield:Notify({Title = 'Anti hit', Content = 'Disable anti hit or auto block wont work', Duration = 6, Image = 'sword'})
             end
-        end
+        end,
+        Blatant = true
     })
 
     PlayerTab:CreateLabel("Anti hit uses Invisibility to dodge basic attacks")
@@ -7608,7 +7833,7 @@ PlayerTab:CreateToggle({
                         (IsKiller() and GetClosestSurvivor(Catsaken.Flags.AutoM1Radius.CurrentValue)) or 
                         (LocalPlayer.Character.Name == 'Shedletsky' and GetClosestKiller(Catsaken.Flags.AutoM1Radius.CurrentValue))
                     )
-                    if (M1Target and M1Target:FindFirstChild('HumanoidRootPart') and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')) then
+                    if (M1Target and M1Target:GetAttribute('Invincible') ~= 1 and M1Target:FindFirstChild('HumanoidRootPart') and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')) then
                         if ((not Catsaken.Flags.AutoM1FaceCheck.CurrentValue) or IsFacing(M1Target.HumanoidRootPart, LocalPlayer.Character.HumanoidRootPart, 0.73)) then
                             NetworkModule:FireServerConnection("UseActorAbility", "REMOTE_EVENT", GetM1Name())
                         end
@@ -7882,7 +8107,8 @@ MapTab:CreateToggle({
                 end)
             end
         end)
-    end
+    end,
+    Blatant = true
 })
 
 MapTab:CreateSection('Survivors', 'Left')
@@ -7966,7 +8192,8 @@ AntisTab:CreateToggle({
     Name = 'Anti stun',
     CurrentValue = false,
     Flag = 'AntiStun',
-    Callback = NULL
+    Callback = NULL,
+    Blatant = true
 })
 
 AntisTab:CreateToggle({
@@ -8015,6 +8242,26 @@ AntisTab:CreateToggle({
 });
 
 -- anticheat
+function clearflags(v,m)
+    if v.Character then
+        v.Character:SetAttribute("INVISDETECTED", nil)
+        v.Character:SetAttribute('TELEPORTS', 0)
+        v.Character:SetAttribute('STAMINA_FLAG_TIME', nil)
+        v.Character:SetAttribute('STAMINA_FLAGS', nil)
+        v.Character:SetAttribute('estimatedStamina', nil)
+        v.Character:SetAttribute('sprinting', nil)
+        v.Character:SetAttribute('ILLEGAL_ANIMATION_FLAG', nil)
+        v.Character:SetAttribute('FAKE_BLOCK_FLAG', nil)
+        v.Character:SetAttribute('FOOTSTEP_FLAGS', nil)
+        v.Character:SetAttribute('timestartedsprinting', nil)
+        v.Character:SetAttribute('SETTINGS_FLAG', nil)
+        v.Character:SetAttribute('INVENTORY_FLAG', nil)
+    end
+    if not m then
+        v:SetAttribute('ILLEGAL_ANIMATION_FLAG', nil)
+        v:SetAttribute('FAKE_BLOCK_FLAG', nil)
+    end
+end
 (function()
     if not _G.UNLOCK_ANTICHEAT then return end
     AntisTab:CreateSection('Anticheat')
@@ -8024,6 +8271,15 @@ AntisTab:CreateToggle({
     local anticheaterrors = {}
     local numcheaters = 0
     local cheaterslabel = AntisTab:CreateLabel('Cheaters:')
+    AntisTab:CreateButton({
+        Name = 'Clear list',
+        Callback = function()
+            for i, _ in pairs(cheatersnames) do
+                clearflags(Players[i])
+            end
+            cheaters, cheatersnames, anticheaterrors, numcheaters = {}, {}, {}, 0
+        end,
+    })
     AntisTab:CreateToggle({
         Name = 'Detect invisibility',
         CurrentValue = true,
@@ -8054,9 +8310,24 @@ AntisTab:CreateToggle({
         ToolTip = 'Detects fake block and animation changers'
     })
     AntisTab:CreateToggle({
+        Name = 'Detect illegal changes',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_DETECTSETTINGS',
+        Callback = NULL,
+        TextMode = true,
+        ToolTip = 'Detects when a player changes their survivor/killer or a setting in-game, which is impossible unless they use a hack to always show their sidebar'
+    })
+    AntisTab:CreateToggle({
         Name = 'Detect stamina modifications',
         CurrentValue = true,
         Flag = 'ANTICHEAT_DETECTSTAMINA',
+        Callback = NULL,
+        TextMode = true
+    })
+    AntisTab:CreateToggle({
+        Name = 'Notify me when cheaters are detected',
+        CurrentValue = true,
+        Flag = 'ANTICHEAT_NOTIFY',
         Callback = NULL,
         TextMode = true
     })
@@ -8092,11 +8363,13 @@ AntisTab:CreateToggle({
                 if (tracked.position - plr.Character.HumanoidRootPart.Position).magnitude >= 50 then
                     if plr.Character.Name == '007n7' and tick() - tracked.c00lguiequip <= 2 then
                         warn("[Anticheat] Player teleported legitimately using the c00lgui")
+                    elseif plr.Character.Name == 'Azure' and tick() - tracked.azuretransformend <= 2 then
+                        warn("[Anticheat] Player teleported legitimately with azure golem")
                     else
                         if GetGameMap():GetAttribute('MapName') == 'ClassicBattlegrounds' and plr.Character.Parent == Killers and (Vector3.new(834, 95, 1498) - plr.Character.HumanoidRootPart.Position).magnitude <= 12 then
                             warn("[Anticheat] Player teleported legitimately through grate on classic battlegrounds")
                         else
-                            positionstracker[plr] = {lastupd = tick(), position = plr.Character.HumanoidRootPart.Position, c00lguiequip = tracked.c00lguiequip}
+                            positionstracker[plr] = {lastupd = tick(), position = plr.Character.HumanoidRootPart.Position, c00lguiequip = tracked.c00lguiequip, azuretransformend = tracked.azuretransformend}
                             plr.Character:SetAttribute('TELEPORTS', plr.Character:GetAttribute('TELEPORTS') + 1)
                         end
                     end
@@ -8113,14 +8386,15 @@ AntisTab:CreateToggle({
             end,reason='illegal jump'},
             ['STAMINA'] = {flag='ANTICHEAT_DETECTSTAMINA', detect=function(plr)
                 local IsSprinting = plr.Character:GetAttribute("sprinting")
-                local Stamina = plr.Character:GetAttribute("estimatedStamina")
+                local Stamina = plr.Character:GetAttribute("estimatedStamina") and plr.Character:GetAttribute("estimatedStamina") * 1.4
+                -- inflate stamina so much that if they are possibly sprinting by the time its estimated 0, they are cheating
                 if not Stamina then return end
                 if not plr.Character:GetAttribute("STAMINA_FLAGS") then
                     plr.Character:SetAttribute("STAMINA_FLAGS", 0)
                 end
                 local flaggedbefore = plr.Character:GetAttribute("STAMINA_FLAG_TIME")
                 if IsSprinting and Stamina <= 0 then
-                    if (flaggedbefore and tick() - flaggedbefore >= 2.1) or not flaggedbefore then
+                    if (flaggedbefore and tick() - flaggedbefore >= 3) or not flaggedbefore then
                         warn("[Anticheat]", plr.Name, "flagged for stamina modifications")
                         plr.Character:SetAttribute("STAMINA_FLAGS", plr.Character:GetAttribute("STAMINA_FLAGS") + 1)
                         plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
@@ -8134,7 +8408,7 @@ AntisTab:CreateToggle({
                         plr.Character:SetAttribute("STAMINA_FLAGS", plr.Character:GetAttribute("STAMINA_FLAGS") - 1)
                         plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
                     end
-                    if plr.Character:GetAttribute("STAMINA_FLAGS") > 2 then
+                    if plr.Character:GetAttribute("STAMINA_FLAGS") > 4 then
                         return true
                     end
                 end
@@ -8145,6 +8419,12 @@ AntisTab:CreateToggle({
             ['ANIMATIONS2'] = {flag='ANTICHEAT_DETECTANIMATIONS', detect=function(plr)
                 return plr.Character:GetAttribute('FAKE_BLOCK_FLAG')
             end,reason='fake block'},
+            ['SETTINGS'] = {flag='ANTICHEAT_DETECTSETTINGS', detect=function(plr)
+                return plr.Character:GetAttribute('SETTINGS_FLAG')
+            end,reason='changing settings in-game'},
+            ['SETTINGS2'] = {flag='ANTICHEAT_DETECTSETTINGS', detect=function(plr)
+                return plr.Character:GetAttribute('INVENTORY_FLAG')
+            end,reason='changing survivor or killer in-game'},
             --[[['FOOTSTEPS'] = {flag='ANTICHEAT_DETECTFOOTSTEPS', detect=function(plr)
                 if plr.Character.Name == 'Nosferatu' then return false end
                 local IsSprinting = plr.Character:GetAttribute("sprinting")
@@ -8180,7 +8460,7 @@ AntisTab:CreateToggle({
                 numcheaters = numcheaters + 1
                 cheaters[plr] = {reasons = {}}
             end
-            if not table.find(cheaters[plr].reasons, reason) then
+            if not table.find(cheaters[plr].reasons, reason) and Catsaken.Flags.ANTICHEAT_NOTIFY.CurrentValue then
                 Rayfield:Notify({Title = 'Cheater Detected!', Content = plr.Name .. ' has triggered \"' .. reason .. "\" and has been flagged for cheating.", Duration = 30, Image = 'triangle-alert'})
                 table.insert(cheaters[plr].reasons, reason)
             end
@@ -8191,15 +8471,7 @@ AntisTab:CreateToggle({
         if not (plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid")) then return end
         if plr.Character.Humanoid.Health <= 0 then return end
         if plr.Character.Parent == workspace.Players.Spectating then
-            plr.Character:SetAttribute('INVISDETECTED', nil)
-            plr.Character:SetAttribute('TELEPORTS', nil)
-            plr.Character:SetAttribute('STAMINA_FLAG_TIME', nil)
-            plr.Character:SetAttribute('STAMINA_FLAGS', nil)
-            plr.Character:SetAttribute('estimatedStamina', nil)
-            plr.Character:SetAttribute('sprinting', nil)
-            plr.Character:SetAttribute('FOOTSTEP_FLAGS', nil)
-            plr.Character:SetAttribute('timestartedsprinting', nil)
-            return
+            return clearflags(plr,true)
         end
         local detection = anticheat.detections[name]
         if Catsaken.Flags[detection.flag].CurrentValue and detection.detect(plr) then
@@ -8221,11 +8493,14 @@ AntisTab:CreateToggle({
             for _, i in pairs(Players:GetPlayers()) do
                 pcall(function()
                     if not positionstracker[i] then
-                        positionstracker[i] = {lastupd = 0, position = i.Character.HumanoidRootPart.Position, c00lguiequip = 0}
+                        positionstracker[i] = {lastupd = 0, position = i.Character.HumanoidRootPart.Position, c00lguiequip = 0, azuretransformend = 0}
                     end
                     local tracked = positionstracker[i]
                     if i.Character:FindFirstChild('c00lgui') then
                         tracked.c00lguiequip = tick()
+                    end
+                    if i.Character.SpeedMultipliers:FindFirstChild('GolemDefaultWalkspeed') then
+                        tracked.azuretransformend = tick()
                     end
                     if tick() - tracked.lastupd >= 0.5 then
                         tracked.position = i.Character.HumanoidRootPart.Position
@@ -8282,28 +8557,68 @@ HookEffect(Effects_Stunned, 'hallucinate', 'AntiHallu')
 -- unloader
 MiscTab:CreateSection('GUI')
 
+local settingsdetectorconnections = {}
+
+local function trackeverything(v)
+    local pd = v:WaitForChild('PlayerData', 15)
+    if pd then
+        local equipped = pd:WaitForChild('Equipped')
+        local settings = pd:WaitForChild('Settings')
+        for i, l in pairs(equipped:GetDescendants()) do
+            if l:IsA("StringValue") then
+                table.insert(settingsdetectorconnections, l:GetPropertyChangedSignal("Value"):Connect(function()
+                    print(l, "changed2", v.Character, v.Character.Parent, IsRoundLoaded())
+                    if v.Character and (v.Character.Parent == Survivors or v.Character.Parent == Killers) then
+                        if Catsaken.Flags.ANTICHEAT_DETECTSETTINGS.CurrentValue and tick() - Forsaken.RoundStart >= 8 and IsRoundLoaded() then
+                            warn("ba")
+                            if l.Name == 'Killer' or l.Name == 'Survivor' or l.Parent.Name == 'Skins' then
+                                warn("bb")
+                                v.Character:SetAttribute('INVENTORY_FLAG', true)
+                            end
+                        end
+                    end
+                end))
+            end
+        end
+        for i, l in pairs(settings:GetDescendants()) do
+            if l.ClassName:find('Value') then
+                table.insert(settingsdetectorconnections, l:GetPropertyChangedSignal("Value"):Connect(function()
+                    print(l, "changed")
+                    if v.Character and (v.Character.Parent == Survivors or v.Character.Parent == Killers) then
+                        if Catsaken.Flags.ANTICHEAT_DETECTSETTINGS.CurrentValue and tick() - Forsaken.RoundStart >= 8 and IsRoundLoaded() then
+                            v.Character:SetAttribute('SETTINGS_FLAG', true)
+                        end
+                    end
+                end))
+            end
+        end
+    else
+        warn("[Anticheat] failed to find playerdata folder")
+    end
+end
+
+Players.PlayerAdded:Connect(function(v)
+    trackeverything(v)
+end)
+
+for i, v in pairs(Players:GetPlayers()) do
+    trackeverything(v)
+end
+
 function Unload()
     Unloaded = true
     warn("Destroying ..!")
+    for i, v in pairs(settingsdetectorconnections) do
+        pcall(function()
+            v:Disconnect()
+        end)
+    end
     Box:Destroy()
     Rayfield:Destroy()
     _G.globaluilibrary = nil
     Env.executed = false
     for i, v in pairs(Players:GetPlayers()) do
-        if v.Character then
-            v.Character:SetAttribute("INVISDETECTED", nil)
-            v.Character:SetAttribute('TELEPORTS', 0)
-            v.Character:SetAttribute('STAMINA_FLAG_TIME', nil)
-            v.Character:SetAttribute('STAMINA_FLAGS', nil)
-            v.Character:SetAttribute('estimatedStamina', nil)
-            v.Character:SetAttribute('sprinting', nil)
-            v.Character:SetAttribute('ILLEGAL_ANIMATION_FLAG', nil)
-            v.Character:SetAttribute('FAKE_BLOCK_FLAG', nil)
-            v.Character:SetAttribute('FOOTSTEP_FLAGS', nil)
-            v.Character:SetAttribute('timestartedsprinting', nil)
-            v:SetAttribute('ILLEGAL_ANIMATION_FLAG', nil)
-            v:SetAttribute('FAKE_BLOCK_FLAG', nil)
-        end
+        clearflags(v)
     end
     pcall(function()
         Env.InvisToggleButton:setEnabled(false)
@@ -8342,6 +8657,7 @@ function Unload()
         Catsaken.Flags[i].Set = NULL
     end)
 end
+if not ShouldUseOldUI then Rayfield.BlatantModeEnabled:Fire(false) end
 MiscTab:CreateButton({
     Name = 'Unload',
     Callback = function()
@@ -8370,6 +8686,16 @@ MiscTab:CreateButton({
         loadstring(game:HttpGet('https://raw.githubusercontent.com/aibabylaugh/catsaken-real-script-not-assets/refs/heads/main/obfuscated-1448974601077002340.lua'))()
     end
 })
+
+if not ShouldUseOldUI then
+    MiscTab:CreateButton({
+        Name = 'Clear all notifications',
+        Callback = function()
+            Rayfield:DeleteNotifications()
+        end,
+        ToolTip = 'Press this is the notifications are bugged and wont dissapear'
+    })
+end
 
 if not ShouldUseOldUI then
     MiscTab:CreateToggle({
@@ -8417,21 +8743,40 @@ MiscTab:CreateToggle({
 })
 
 local oldnotif
-MiscTab:CreateDropdown({
-    Name = 'Notifications position',
-    Options = {'Bottom', 'Top'},
-    CurrentOption = {'Bottom'},
-    Flag = 'NotificationLayout',
-    Callback = function(Options,is)
-        pcall(function()
-            oldnotif.Close()
-        end)
-        Rayfield:ChangeNotificationLayout(Options[1])
-        if not is then
-            oldnotif = Rayfield:Notify({Title = 'Example', Content = 'Changed the notification position to ' .. Options[1], Duration = 6, Image = 'info'})
+if not ShouldUseOldUI then
+    MiscTab:CreateDropdown({
+        Name = 'Notifications position',
+        Options = {'Bottom', 'Top'},
+        CurrentOption = {'Bottom'},
+        Flag = 'NotificationLayout',
+        Callback = function(Options,is)
+            pcall(function()
+                oldnotif.Close()
+            end)
+            Rayfield:ChangeNotificationLayout(Options[1])
+            if not is then
+                oldnotif = Rayfield:Notify({Title = 'Example', Content = 'Changed the notification position to ' .. Options[1], Duration = 6, Image = 'info'})
+            end
         end
-    end
-})
+    })
+end
+
+if not ShouldUseOldUI then
+    local blatanttext = MiscTab:CreateLabel('Blatant mode is not enabled, risky features are locked')
+    MiscTab:CreateToggle({
+        Name = 'Blatant Mode',
+        CurrentValue = false,
+        Callback = function(C)
+            if not C then
+                blatanttext:Set('Blatant mode is not enabled, risky features are locked')
+            else
+                blatanttext:Set('Blatant mode is enabled, and you get access to features that are highly risky and from experience are leading causes of BANS. as a reminder, forsaken anticheat can NOT ban you, so if you enable these blatant features and you get reported, you are going to get banned guaranteed!!')
+            end
+            Rayfield.BlatantModeEnabled:Fire(C)
+        end,
+        Flag = 'BlatantModeEnabled'
+    })
+end
 
 --[[MiscTab:CreateButton({
     Name = (Env.DarkMode and 'Disable' or 'Enable') .. ' dark mode GUI',
@@ -8520,8 +8865,6 @@ if (identifyexecutor() ~= "Cosmic") then
 else
     MiscTab:CreateLabel("Fake Block not supported on cosmic")
 end
-
-local BlockAnims = {}
 
 local TrackingConnection
 function Track(Char)
@@ -8772,6 +9115,24 @@ function cfgmanager()
             end)())
         end
     })
+
+    if identifyexecutor() == 'Delta' then
+        ConfigsTab:CreateButton({
+            Name = 'Share Current Settings ⭐',
+            Callback = function()
+                Env.MobileToggle:deselect()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/config.lua"))()
+            end
+        })
+
+        ConfigsTab:CreateButton({
+            Name = 'Search For Configs ⭐',
+            Callback = function()
+                Env.MobileToggle:deselect()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/search.lua"))()
+            end
+        })
+    end
 
     ConfigsTab:CreateLabel("To put Auto-Load on a configuration, simply select that configuration and load it, and then it will become your Auto-Load.")
 end
