@@ -1,8 +1,6 @@
-local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 
-local plr = Players.LocalPlayer
 local request = request or http_request or (syn and syn.request)
 
 local GUI = Instance.new("ScreenGui")
@@ -20,7 +18,7 @@ Shadow.ZIndex = 1
 Shadow.Parent = GUI
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.fromOffset(480, 455)
+Main.Size = UDim2.fromScale(.9, .82)
 Main.Position = UDim2.fromScale(.5, .5)
 Main.AnchorPoint = Vector2.new(.5, .5)
 Main.BackgroundColor3 = Color3.fromRGB(17, 17, 21)
@@ -28,6 +26,11 @@ Main.BackgroundTransparency = 1
 Main.BorderSizePixel = 0
 Main.ZIndex = 2
 Main.Parent = GUI
+
+local SizeConstraint = Instance.new("UISizeConstraint")
+SizeConstraint.MinSize = Vector2.new(320, 400)
+SizeConstraint.MaxSize = Vector2.new(560, 520)
+SizeConstraint.Parent = Main
 
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
 
@@ -204,7 +207,7 @@ end)
 
 local Status = Instance.new("TextLabel")
 Status.Size = UDim2.new(1, -48, 0, 18)
-Status.Position = UDim2.fromOffset(24, 362)
+Status.Position = UDim2.new(0, 24, 1, -92)
 Status.BackgroundTransparency = 1
 Status.Text = ""
 Status.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -212,6 +215,7 @@ Status.TextTransparency = 1
 Status.TextSize = 11
 Status.Font = Enum.Font.Gotham
 Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.TextTruncate = Enum.TextTruncate.AtEnd
 Status.ZIndex = 3
 Status.Parent = Main
 
@@ -308,19 +312,16 @@ Publish.MouseButton1Click:Connect(function()
 
     if #name < 10 then
         Status.Text = "Configuration name must be at least 10 characters."
-        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
         return
     end
 
     if #description < 20 then
         Status.Text = "Description must be at least 20 characters."
-        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
         return
     end
 
     if not Anonymous and #username < 1 then
         Status.Text = "Enter a publisher name or enable anonymous publishing."
-        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
         return
     end
 
