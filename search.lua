@@ -1,3 +1,4 @@
+local Catsaken = _G.CATSAKENX
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 
