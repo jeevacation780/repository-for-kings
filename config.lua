@@ -1,5 +1,3 @@
-local Catsaken = _G.CATSAKENX
-
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
@@ -13,7 +11,6 @@ GUI.ResetOnSpawn = false
 GUI.IgnoreGuiInset = true
 GUI.Parent = game:GetService("CoreGui")
 
--- screen shadow
 local Shadow = Instance.new("Frame")
 Shadow.Size = UDim2.fromScale(1, 1)
 Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -23,7 +20,7 @@ Shadow.ZIndex = 1
 Shadow.Parent = GUI
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.fromOffset(480, 400)
+Main.Size = UDim2.fromOffset(480, 455)
 Main.Position = UDim2.fromScale(.5, .5)
 Main.AnchorPoint = Vector2.new(.5, .5)
 Main.BackgroundColor3 = Color3.fromRGB(17, 17, 21)
@@ -93,15 +90,11 @@ local function Box(y, placeholder)
     B.BackgroundColor3 = Color3.fromRGB(24, 24, 29)
     B.BackgroundTransparency = 1
     B.BorderSizePixel = 0
-
-    -- Empty by default; this is only a placeholder.
     B.Text = ""
     B.PlaceholderText = placeholder
     B.PlaceholderColor3 = Color3.fromRGB(92, 92, 102)
-
     B.TextColor3 = Color3.fromRGB(235, 235, 240)
     B.TextTransparency = 1
-    B.PlaceholderText = placeholder
     B.TextSize = 13
     B.Font = Enum.Font.Gotham
     B.ClearTextOnFocus = false
@@ -119,15 +112,18 @@ local function Box(y, placeholder)
     return B
 end
 
-local NameLabel = Label("CONFIGURATION NAME", 86)
+Label("CONFIGURATION NAME", 86)
 local NameBox = Box(106, "Enter a configuration name")
 
-local DescLabel = Label("DESCRIPTION", 163)
+Label("DESCRIPTION", 163)
 local DescBox = Box(183, "Tell people what this configuration does")
 
+Label("PUBLISHER NAME", 240)
+local UsernameBox = Box(260, "Enter the name you want displayed")
+
 local Anon = Instance.new("Frame")
-Anon.Size = UDim2.new(1, -48, 0, 43)
-Anon.Position = UDim2.fromOffset(24, 239)
+Anon.Size = UDim2.new(1, -48, 0, 42)
+Anon.Position = UDim2.fromOffset(24, 313)
 Anon.BackgroundTransparency = 1
 Anon.ZIndex = 3
 Anon.Parent = Main
@@ -148,7 +144,7 @@ local AnonSub = Instance.new("TextLabel")
 AnonSub.Size = UDim2.new(1, -58, 0, 15)
 AnonSub.Position = UDim2.fromOffset(0, 21)
 AnonSub.BackgroundTransparency = 1
-AnonSub.Text = "Hide your Roblox username"
+AnonSub.Text = "Hide the publisher name"
 AnonSub.TextColor3 = Color3.fromRGB(105, 105, 115)
 AnonSub.TextTransparency = 1
 AnonSub.TextSize = 10
@@ -208,7 +204,7 @@ end)
 
 local Status = Instance.new("TextLabel")
 Status.Size = UDim2.new(1, -48, 0, 18)
-Status.Position = UDim2.fromOffset(24, 289)
+Status.Position = UDim2.fromOffset(24, 362)
 Status.BackgroundTransparency = 1
 Status.Text = ""
 Status.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -251,47 +247,6 @@ Publish.Parent = Main
 
 Instance.new("UICorner", Publish).CornerRadius = UDim.new(0, 10)
 
--- opening animation
-task.spawn(function()
-    TweenService:Create(Shadow, TweenInfo.new(.3, Enum.EasingStyle.Quart), {
-        BackgroundTransparency = .35
-    }):Play()
-
-    TweenService:Create(Main, TweenInfo.new(.35, Enum.EasingStyle.Quart), {
-        BackgroundTransparency = 0
-    }):Play()
-
-    TweenService:Create(Scale, TweenInfo.new(.4, Enum.EasingStyle.Back), {
-        Scale = 1
-    }):Play()
-
-    TweenService:Create(Stroke, TweenInfo.new(.3), {
-        Transparency = .25
-    }):Play()
-
-    for _, obj in ipairs(Main:GetDescendants()) do
-        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-            TweenService:Create(obj, TweenInfo.new(.3), {
-                TextTransparency = 0
-            }):Play()
-        end
-
-        if obj:IsA("TextBox") then
-            TweenService:Create(obj, TweenInfo.new(.3), {
-                BackgroundTransparency = 0
-            }):Play()
-        elseif obj:IsA("TextButton") then
-            TweenService:Create(obj, TweenInfo.new(.3), {
-                BackgroundTransparency = 0
-            }):Play()
-        end
-    end
-
-    TweenService:Create(Knob, TweenInfo.new(.3), {
-        BackgroundTransparency = 0
-    }):Play()
-end)
-
 local closing = false
 
 local function Close()
@@ -301,7 +256,11 @@ local function Close()
 
     closing = true
 
-    local info = TweenInfo.new(.28, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+    local info = TweenInfo.new(
+        .28,
+        Enum.EasingStyle.Quart,
+        Enum.EasingDirection.In
+    )
 
     TweenService:Create(Shadow, info, {
         BackgroundTransparency = 1
@@ -320,7 +279,10 @@ local function Close()
     }):Play()
 
     for _, obj in ipairs(Main:GetDescendants()) do
-        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+        if obj:IsA("TextLabel")
+            or obj:IsA("TextButton")
+            or obj:IsA("TextBox")
+        then
             TweenService:Create(obj, info, {
                 TextTransparency = 1
             }):Play()
@@ -333,10 +295,6 @@ local function Close()
         end
     end
 
-    TweenService:Create(Knob, info, {
-        BackgroundTransparency = 1
-    }):Play()
-
     task.wait(.3)
     GUI:Destroy()
 end
@@ -346,8 +304,8 @@ Cancel.MouseButton1Click:Connect(Close)
 Publish.MouseButton1Click:Connect(function()
     local name = NameBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
     local description = DescBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+    local username = UsernameBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
 
-    -- validation
     if #name < 10 then
         Status.Text = "Configuration name must be at least 10 characters."
         Status.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -356,6 +314,12 @@ Publish.MouseButton1Click:Connect(function()
 
     if #description < 20 then
         Status.Text = "Description must be at least 20 characters."
+        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+
+    if not Anonymous and #username < 1 then
+        Status.Text = "Enter a publisher name or enable anonymous publishing."
         Status.TextColor3 = Color3.fromRGB(255, 100, 100)
         return
     end
@@ -371,7 +335,7 @@ Publish.MouseButton1Click:Connect(function()
     end
 
     cfg.anonymous = Anonymous
-    cfg.username = plr.Name
+    cfg.username = username
     cfg.description = description
 
     local body = HttpService:JSONEncode({
@@ -410,6 +374,7 @@ Publish.MouseButton1Click:Connect(function()
 
         Publish.Text = "Publish"
         Publish.Active = true
+        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
 
         if response.StatusCode == 409 then
             Status.Text = "A configuration with this name already exists."
@@ -418,7 +383,52 @@ Publish.MouseButton1Click:Connect(function()
         else
             Status.Text = response.Body or "Something went wrong."
         end
-
-        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
     end)
+end)
+
+task.spawn(function()
+    TweenService:Create(
+        Shadow,
+        TweenInfo.new(.3, Enum.EasingStyle.Quart),
+        {BackgroundTransparency = .35}
+    ):Play()
+
+    TweenService:Create(
+        Main,
+        TweenInfo.new(.35, Enum.EasingStyle.Quart),
+        {BackgroundTransparency = 0}
+    ):Play()
+
+    TweenService:Create(
+        Scale,
+        TweenInfo.new(.4, Enum.EasingStyle.Back),
+        {Scale = 1}
+    ):Play()
+
+    TweenService:Create(
+        Stroke,
+        TweenInfo.new(.3),
+        {Transparency = .25}
+    ):Play()
+
+    for _, obj in ipairs(Main:GetDescendants()) do
+        if obj:IsA("TextLabel")
+            or obj:IsA("TextButton")
+            or obj:IsA("TextBox")
+        then
+            TweenService:Create(obj, TweenInfo.new(.3), {
+                TextTransparency = 0
+            }):Play()
+        end
+
+        if obj:IsA("TextBox") or obj:IsA("TextButton") then
+            TweenService:Create(obj, TweenInfo.new(.3), {
+                BackgroundTransparency = 0
+            }):Play()
+        end
+    end
+
+    TweenService:Create(Knob, TweenInfo.new(.3), {
+        BackgroundTransparency = 0
+    }):Play()
 end)
