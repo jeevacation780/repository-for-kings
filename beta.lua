@@ -9120,6 +9120,7 @@ function cfgmanager()
         ConfigsTab:CreateButton({
             Name = 'Share Current Settings ⭐',
             Callback = function()
+                Env.MobileToggle:deselect()
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/config.lua"))()
             end
         })
@@ -9127,6 +9128,7 @@ function cfgmanager()
         ConfigsTab:CreateButton({
             Name = 'Search For Configs ⭐',
             Callback = function()
+                Env.MobileToggle:deselect()
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/search.lua"))()
             end
         })
