@@ -1,35 +1,22 @@
-local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 
-local plr = Players.LocalPlayer
 local request = request or http_request or (syn and syn.request)
 
-local function deepcopy(value, seen)
-    if type(value) ~= "table" then
-        return value
-    end
-
-    seen = seen or {}
-
-    if seen[value] then
-        return seen[value]
-    end
-
+local function deepcopy(tbl)
     local copy = {}
-    seen[value] = copy
 
-    for key, val in pairs(value) do
-        copy[deepcopy(key, seen)] = deepcopy(val, seen)
+    for i, v in pairs(tbl) do
+        copy[i] = type(v) == "table" and deepcopy(v) or v
     end
 
-    return setmetatable(copy, getmetatable(value))
+    return copy
 end
 
-local function SaveConfig(CONFIGNAME, CONFIGSETTINGS_NON_JSON)
+local function SaveConfig(name, settings)
     local newconfigs = {}
 
-    if isfile and isfile("catsakenconfigs.json") then
+    if isfile("catsakenconfigs.json") then
         local success, decoded = pcall(function()
             return HttpService:JSONDecode(readfile("catsakenconfigs.json"))
         end)
@@ -39,7 +26,7 @@ local function SaveConfig(CONFIGNAME, CONFIGSETTINGS_NON_JSON)
         end
     end
 
-    newconfigs[CONFIGNAME] = deepcopy(CONFIGSETTINGS_NON_JSON)
+    newconfigs[name] = deepcopy(settings)
 
     writefile(
         "catsakenconfigs.json",
@@ -62,7 +49,7 @@ Shadow.ZIndex = 1
 Shadow.Parent = GUI
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.fromOffset(560, 500)
+Main.Size = UDim2.fromScale(.9, .82)
 Main.Position = UDim2.fromScale(.5, .5)
 Main.AnchorPoint = Vector2.new(.5, .5)
 Main.BackgroundColor3 = Color3.fromRGB(17, 17, 21)
@@ -71,11 +58,17 @@ Main.BorderSizePixel = 0
 Main.ZIndex = 2
 Main.Parent = GUI
 
+local SizeConstraint = Instance.new("UISizeConstraint")
+SizeConstraint.MinSize = Vector2.new(320, 380)
+SizeConstraint.MaxSize = Vector2.new(560, 520)
+SizeConstraint.Parent = Main
+
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
 
 local Stroke = Instance.new("UIStroke")
 Stroke.Color = Color3.fromRGB(55, 55, 64)
 Stroke.Transparency = 1
+Stroke.Thickness = 1
 Stroke.Parent = Main
 
 local Scale = Instance.new("UIScale")
@@ -134,7 +127,7 @@ SearchPadding.PaddingRight = UDim.new(0, 14)
 SearchPadding.Parent = Search
 
 local List = Instance.new("ScrollingFrame")
-List.Size = UDim2.new(1, -48, 1, -150)
+List.Size = UDim2.new(1, -48, 1, -154)
 List.Position = UDim2.fromOffset(24, 137)
 List.BackgroundTransparency = 1
 List.BorderSizePixel = 0
@@ -206,63 +199,66 @@ local function CreateConfig(config)
         return
     end
 
-    local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, -4, 0, 82)
-    card.BackgroundColor3 = Color3.fromRGB(23, 23, 28)
-    card.BackgroundTransparency = 1
-    card.BorderSizePixel = 0
-    card.ZIndex = 4
-    card.Parent = List
+    local Card = Instance.new("Frame")
+    Card.Size = UDim2.new(1, -4, 0, 82)
+    Card.BackgroundColor3 = Color3.fromRGB(23, 23, 28)
+    Card.BackgroundTransparency = 1
+    Card.BorderSizePixel = 0
+    Card.ZIndex = 4
+    Card.Parent = List
 
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 11)
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 11)
 
-    local name = Instance.new("TextLabel")
-    name.Size = UDim2.new(1, -145, 0, 22)
-    name.Position = UDim2.fromOffset(14, 11)
-    name.BackgroundTransparency = 1
-    name.Text = tostring(config.name or "Unnamed")
-    name.TextColor3 = Color3.fromRGB(235, 235, 240)
-    name.TextSize = 14
-    name.Font = Enum.Font.GothamSemibold
-    name.TextXAlignment = Enum.TextXAlignment.Left
-    name.TextTruncate = Enum.TextTruncate.AtEnd
-    name.ZIndex = 5
-    name.Parent = card
+    local CardPadding = Instance.new("UIPadding")
+    CardPadding.PaddingLeft = UDim.new(0, 14)
+    CardPadding.PaddingRight = UDim.new(0, 12)
+    CardPadding.Parent = Card
 
-    local description = Instance.new("TextLabel")
-    description.Size = UDim2.new(1, -145, 0, 19)
-    description.Position = UDim2.fromOffset(14, 34)
-    description.BackgroundTransparency = 1
-    description.Text = tostring(data.description or "No description")
-    description.TextColor3 = Color3.fromRGB(125, 125, 135)
-    description.TextSize = 11
-    description.Font = Enum.Font.Gotham
-    description.TextXAlignment = Enum.TextXAlignment.Left
-    description.TextTruncate = Enum.TextTruncate.AtEnd
-    description.ZIndex = 5
-    description.Parent = card
+    local Name = Instance.new("TextLabel")
+    Name.Size = UDim2.new(1, -118, 0, 21)
+    Name.Position = UDim2.fromOffset(0, 9)
+    Name.BackgroundTransparency = 1
+    Name.Text = tostring(config.name or "Unnamed")
+    Name.TextColor3 = Color3.fromRGB(235, 235, 240)
+    Name.TextSize = 14
+    Name.Font = Enum.Font.GothamSemibold
+    Name.TextXAlignment = Enum.TextXAlignment.Left
+    Name.TextTruncate = Enum.TextTruncate.AtEnd
+    Name.ZIndex = 5
+    Name.Parent = Card
 
-    local publisher = Instance.new("TextLabel")
-    publisher.Size = UDim2.new(1, -145, 0, 15)
-    publisher.Position = UDim2.fromOffset(14, 56)
-    publisher.BackgroundTransparency = 1
+    local Description = Instance.new("TextLabel")
+    Description.Size = UDim2.new(1, -118, 0, 19)
+    Description.Position = UDim2.fromOffset(0, 31)
+    Description.BackgroundTransparency = 1
+    Description.Text = tostring(data.description or "No description")
+    Description.TextColor3 = Color3.fromRGB(125, 125, 135)
+    Description.TextSize = 11
+    Description.Font = Enum.Font.Gotham
+    Description.TextXAlignment = Enum.TextXAlignment.Left
+    Description.TextTruncate = Enum.TextTruncate.AtEnd
+    Description.ZIndex = 5
+    Description.Parent = Card
 
-    publisher.Text = data.anonymous
+    local Publisher = Instance.new("TextLabel")
+    Publisher.Size = UDim2.new(1, -118, 0, 15)
+    Publisher.Position = UDim2.fromOffset(0, 53)
+    Publisher.BackgroundTransparency = 1
+    Publisher.Text = data.anonymous
         and "Published anonymously"
         or ("Published by " .. tostring(data.username or "Unknown"))
-
-    publisher.TextColor3 = Color3.fromRGB(90, 90, 100)
-    publisher.TextSize = 10
-    publisher.Font = Enum.Font.Gotham
-    publisher.TextXAlignment = Enum.TextXAlignment.Left
-    publisher.ZIndex = 5
-    publisher.Parent = card
+    Publisher.TextColor3 = Color3.fromRGB(90, 90, 100)
+    Publisher.TextSize = 10
+    Publisher.Font = Enum.Font.Gotham
+    Publisher.TextXAlignment = Enum.TextXAlignment.Left
+    Publisher.TextTruncate = Enum.TextTruncate.AtEnd
+    Publisher.ZIndex = 5
+    Publisher.Parent = Card
 
     local Save = Instance.new("TextButton")
-    Save.Size = UDim2.fromOffset(100, 36)
-    Save.Position = UDim2.new(1, -112, .5, -18)
+    Save.Size = UDim2.fromOffset(92, 36)
+    Save.Position = UDim2.new(1, -92, .5, -18)
     Save.BackgroundColor3 = Color3.fromRGB(0, 190, 160)
-    Save.BackgroundTransparency = 0
     Save.BorderSizePixel = 0
     Save.Text = "Save"
     Save.TextColor3 = Color3.fromRGB(7, 25, 22)
@@ -270,7 +266,7 @@ local function CreateConfig(config)
     Save.Font = Enum.Font.GothamSemibold
     Save.AutoButtonColor = false
     Save.ZIndex = 5
-    Save.Parent = card
+    Save.Parent = Card
 
     Instance.new("UICorner", Save).CornerRadius = UDim.new(0, 9)
 
@@ -287,21 +283,23 @@ local function CreateConfig(config)
     end)
 
     Save.MouseButton1Click:Connect(function()
-        local CONFIGSETTINGS_NON_JSON = deepcopy(data)
-        CONFIGSETTINGS_NON_JSON.anonymous = nil
-        CONFIGSETTINGS_NON_JSON.username = nil
-        CONFIGSETTINGS_NON_JSON.description = nil
+        local settings = deepcopy(data)
+
+        settings.anonymous = nil
+        settings.username = nil
+        settings.description = nil
 
         local success, err = pcall(function()
             SaveConfig(
                 tostring(config.name),
-                CONFIGSETTINGS_NON_JSON
+                settings
             )
         end)
 
         if success then
             Save.Text = "Saved"
             Save.BackgroundColor3 = Color3.fromRGB(65, 190, 130)
+
             SetStatus(
                 "Saved " .. tostring(config.name) .. " to catsakenconfigs.json.",
                 Color3.fromRGB(80, 220, 180)
@@ -390,11 +388,11 @@ local function LoadConfigs()
         return
     end
 
-    local decodeSuccess, data = pcall(function()
+    local successDecode, data = pcall(function()
         return HttpService:JSONDecode(response.Body)
     end)
 
-    if not decodeSuccess or type(data) ~= "table" then
+    if not successDecode or type(data) ~= "table" then
         SetStatus(
             "Failed to decode server response.",
             Color3.fromRGB(255, 100, 100)
@@ -408,7 +406,7 @@ end
 
 Search:GetPropertyChangedSignal("Text"):Connect(Render)
 
-Close.MouseButton1Click:Connect(function()
+local function CloseMenu()
     if closing then
         return
     end
@@ -447,26 +445,24 @@ Close.MouseButton1Click:Connect(function()
             }):Play()
         end
 
-        if obj:IsA("TextBox") then
-            TweenService:Create(obj, info, {
-                BackgroundTransparency = 1
-            }):Play()
-        elseif obj:IsA("TextButton") then
-            TweenService:Create(obj, info, {
-                BackgroundTransparency = 1
-            }):Play()
-        elseif obj:IsA("Frame") and obj ~= Main then
-            TweenService:Create(obj, info, {
-                BackgroundTransparency = 1
-            }):Play()
+        if obj:IsA("TextBox")
+            or obj:IsA("TextButton")
+            or obj:IsA("Frame")
+        then
+            if obj ~= Main then
+                TweenService:Create(obj, info, {
+                    BackgroundTransparency = 1
+                }):Play()
+            end
         end
     end
 
     task.wait(.3)
     GUI:Destroy()
-end)
+end
 
--- opening animation
+Close.MouseButton1Click:Connect(CloseMenu)
+
 task.spawn(function()
     TweenService:Create(
         Shadow,
