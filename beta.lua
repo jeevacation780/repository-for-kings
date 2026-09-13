@@ -5304,8 +5304,8 @@ GeneratorsTab:CreateSection('Generator Settings', 'Right')
 
 GeneratorsTab:CreateSlider({
     Name = 'Puzzle Speed',
-    Range = {0.002, 1},
-    Increment = 0.001,
+    Range = {0.02, 1},
+    Increment = 0.01,
     Suffix = 's',
     CurrentValue = 0.08,
     Flag = 'GeneratorPuzzleDelay',
@@ -9116,19 +9116,21 @@ function cfgmanager()
         end
     })
 
-    ConfigsTab:CreateButton({
-        Name = 'Share Current Settings ⭐',
-        Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/config.lua"))()
-        end
-    })
+    if identifyexecutor() == 'Delta' then
+        ConfigsTab:CreateButton({
+            Name = 'Share Current Settings ⭐',
+            Callback = function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/config.lua"))()
+            end
+        })
 
-    ConfigsTab:CreateButton({
-        Name = 'Search For Configs ⭐',
-        Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/search.lua"))()
-        end
-    })
+        ConfigsTab:CreateButton({
+            Name = 'Search For Configs ⭐',
+            Callback = function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/search.lua"))()
+            end
+        })
+    end
 
     ConfigsTab:CreateLabel("To put Auto-Load on a configuration, simply select that configuration and load it, and then it will become your Auto-Load.")
 end
