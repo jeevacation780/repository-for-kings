@@ -7175,6 +7175,12 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                     while track.IsPlaying or Forsaken.UsingWalkspeedOverride do
                         local front = 1000
                         local left, right, back = 6, 6, 0
+                        if (AttackName == 'Entanglement' or AttackName == 'Enstrangle' or AttackName == 'UppercutPullingLoop') then
+                            left, right = 3, 3
+                        end
+                        if (iswso) then
+                            left, right = 4, 4
+                        end
                         Box.CFrame = Char.HumanoidRootPart.CFrame * CFrame.new((right - left) / 2, 0, -(front - back) / 2)
                         Box.Size = Vector3.new(left + right, 10, front + back)
                         RunService.RenderStepped:Wait()
