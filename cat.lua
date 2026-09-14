@@ -5610,14 +5610,14 @@ VisualsTab:CreateToggle({
     Flag = 'AzureEsp',
     Callback = NULL
 })
-
+--[[
 VisualsTab:CreateToggle({
     Name = 'Jane Doe Quest ESP',
     CurrentValue = false,
     Flag = 'JaneDoeQuestESP',
     Callback = NULL
 })
-
+]]
 VisualsTab:CreateSection('Esp Colors')
 
 VisualsTab:CreateColorPicker({
