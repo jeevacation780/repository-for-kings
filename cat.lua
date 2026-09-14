@@ -105,6 +105,7 @@ local DusekkarBehavior = require(ReplicatedStorage.Assets.Survivors.Dusekkar.Beh
 local ShiftLockModule = require(ReplicatedStorage.Systems.Player.Game.SmoothShiftLock)
 local SidebarHandler = require(ReplicatedStorage.Systems.Player.UI.SidebarHandler)
 local VeeronicaConfig = require(ReplicatedStorage.Assets.Survivors.Veeronica.Config)
+local GuestConfig = require(ReplicatedStorage.Assets.Survivors.Guest1337.Config)
 local NoliConfig = require(ReplicatedStorage.Assets.Killers.Noli.Config)
 local SixerConfig = require(ReplicatedStorage.Assets.Killers.Sixer.Config)
 local CharacterReplication = require(ReplicatedStorage.Systems.Player.Game.CharacterReplication)
@@ -143,6 +144,8 @@ local CoreGui = game:GetService('CoreGui')
 local ImagesUI = Instance.new('ScreenGui', IsVelocity and CoreGui or gethui())
 local OldWarn = warn
 local IsMobile = UserInputService.TouchEnabled == true and UserInputService.KeyboardEnabled == false
+local JaneDoeDocMesh = 'rbxassetid://116433898437270'
+local JaneDoeRingMesh = 'rbxassetid://81503280733693'
 DoeConfig.CorruptEnergyWindup = 2
 
 function randomstring(l)
@@ -4273,7 +4276,9 @@ else
     • Added desync option for autofarm (legit way)
     • Fixed an auto-block issue reacting to non-killers
     • Added noli turn control
+    • Added guest1337 turn control
     • Added use dusekkar through walls
+    • Added corrupt nature toggle for g1337
     • Updated stun spy detection (now animation-based)
     • Esp outline only toggle
     • Added reveal ability trajectorys
@@ -5606,6 +5611,13 @@ VisualsTab:CreateToggle({
     Callback = NULL
 })
 
+VisualsTab:CreateToggle({
+    Name = 'Jane Doe Quest ESP',
+    CurrentValue = false,
+    Flag = 'JaneDoeQuestESP',
+    Callback = NULL
+})
+
 VisualsTab:CreateSection('Esp Colors')
 
 VisualsTab:CreateColorPicker({
@@ -5927,7 +5939,7 @@ StaminaTab:CreateToggle({
     Callback = NULL
 })
 
-StaminaTab:CreateSection('Sprinting')
+--StaminaTab:CreateSection('Sprinting')
 
 --[[StaminaTab:CreateToggle({
     Name = "Fast sprint (kick warning)",
@@ -6665,6 +6677,27 @@ ConvenienceTab:CreateToggle({
         else
             NoliConfig.VoidRushInitialTurnDuration = 1.5
             NoliConfig.VoidRushInitialTurnMult = 6.6
+        end
+    end
+})
+
+ConvenienceTab:CreateToggle({
+    Name = 'Guest anti-crash',
+    CurrentValue = false,
+    Flag = 'ChargeAntiCrash',
+    Callback = NULL
+})
+
+ConvenienceTab:CreateToggle({
+    Name = 'Guest turn control',
+    CurrentValue = false,
+    Flag = 'ChargeControl',
+    Callback = function(Bool,is)
+        if (Bool) then
+            if not is then Rayfield:Notify({Title = 'Guest turn control', Content = 'Wait until the next round to start for this feature to apply', Duration = 4}) end
+            GuestConfig.ChargingTurnSpeed = 9999
+        else
+            GuestConfig.ChargingTurnSpeed = 2
         end
     end
 })
@@ -7817,9 +7850,11 @@ oldFireserver = hookfunction(NetworkModule.FireServerConnection, newcclosure(fun
         return oldFireserver(self, unpack(args))
     end
     if (Catsaken.Flags.VoidRushAntiCrash.CurrentValue and args[1] == (LocalPlayer.Name .. 'VoidRushCollision') and Forsaken.VoidRushTracker) then
-        print(Forsaken.VoidRushTracker)
         repeat wait() until (tick() - Forsaken.VoidRushTracker >= NoliConfig.VoidRushDashLength)
         return oldFireserver(self, unpack(args))
+    end
+    if (Catsaken.Flags.ChargeAntiCrash.CurrentValue and args[1] == (LocalPlayer.Name .. 'Guest1337Collision')) then
+        return
     end
     return oldFireserver(self, unpack(args))
 end))
