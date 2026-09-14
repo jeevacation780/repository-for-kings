@@ -105,6 +105,7 @@ local DusekkarBehavior = require(ReplicatedStorage.Assets.Survivors.Dusekkar.Beh
 local ShiftLockModule = require(ReplicatedStorage.Systems.Player.Game.SmoothShiftLock)
 local SidebarHandler = require(ReplicatedStorage.Systems.Player.UI.SidebarHandler)
 local VeeronicaConfig = require(ReplicatedStorage.Assets.Survivors.Veeronica.Config)
+local NoliConfig = require(ReplicatedStorage.Assets.Killers.Noli.Config)
 local CharacterReplication = require(ReplicatedStorage.Systems.Player.Game.CharacterReplication)
 local TabbedOutScare = ReplicatedStorage.Systems.Player.Miscellaneous.TabbedOutScare
 local TopbarPlus = require(ReplicatedStorage.Modules.Utilities.Icon)
@@ -174,7 +175,7 @@ local function itampered()
     local new = gettampers()+1
     writefile(tamperfile, string.char(new))
 end
-if gettampers() >= 3 then
+if gettampers() >= 10 then
     writefile(blacklistfile, tostring(os.time()))
 end
 local blacklist = isfile(blacklistfile) and tonumber(readfile(blacklistfile)) or 0
@@ -270,10 +271,13 @@ task.spawn(function()
     local s = randomstring()
     local s2 = randomstring()
     local s3 = randomstring()
+    local s4 = randomstring()
     local n = 0
     getgenv()[s] = n
     getgenv()[s2] = n
     getgenv()[s3] = n
+    getgenv()[s4] = 'ozo is that you? LOL it must be!'
+    pcall(loadstring, getgenv()[s4])
     while not Unloaded do
         pcall(function()
             if isfunctionhooked(msgout) then
@@ -361,6 +365,10 @@ end) then
     triggered()
 end
 
+local function onkick(msg)
+    Unload()
+end
+
 local gotkicked = false
 GuiService.ErrorMessageChanged:Connect(function(message)
     if gotkicked then return end
@@ -378,6 +386,9 @@ GuiService.ErrorMessageChanged:Connect(function(message)
                 content = "Kick: " .. text .. "\nDevice: " .. (IsMobile and "Mobile" or "PC") .. "\nExecutor: " .. identifyexecutor()
             })
         })
+        if msg:find('ForsakenCheatKiller') then
+            onkick(msg)
+        end
     end
 end)
 
@@ -4256,8 +4267,12 @@ if ShouldUseOldUI then
 else
     AboutTab:CreateSection('Changelog')
     AboutTab:CreateLabel([[-- Pinned --
-• Added cheater-detector (Still work in progress so suggest things to add to the detections!)
+• Added cheater-detector (Still work in progress so suggest things to add to the detections or what to fix!)
 13/09/2026
+    • Added desync option for autofarm (legit way)
+    • Fixed an auto-block issue reacting to non-killers
+    • Added noli turn control
+    • Updated stun spy detection (now animation-based)
     • Esp outline only toggle
     • Added reveal ability trajectorys
     • Added enable sprint after successful block option
@@ -4332,6 +4347,7 @@ local Forsaken = {
     GameState = 0,
     RoundStart = 0,
     HitboxesDuration = 0.31,
+    Desynced = false,
     RoundGenerators = {},
     Killers = {},
     Survivors = {},
@@ -4568,7 +4584,7 @@ print("inserted", #Forsaken.M1Animations, 'walkspeed override end animations')
 print("inserted", #Forsaken.M1Animations, 'M1 animations')
 
 function IsRoundLoaded()
-    return GetGameMap() ~= nil and workspace:GetAttribute('ClientLoaded') and #Forsaken.RoundGenerators >= 5
+    return GetGameMap() ~= nil and workspace:GetAttribute('ClientLoaded') and #Forsaken.RoundGenerators >= 5 and Forsaken.GameState == 1
 end
 
 function GameStateChanged(InRound, InLobby)
@@ -5080,11 +5096,21 @@ function CompleteGenerators()
     end
     if (DoingAllGenerators) then return end
     if (IsKiller()) then return end
+    local OldCF = LocalPlayer.Character.HumanoidRootPart.CFrame
     DoingAllGenerators = true
+    if Catsaken.Flags.DesyncWhenAutofarming.CurrentValue then
+        Forsaken.Desynced = true
+    end
     pcall(function()
         for _, Generator in Forsaken.RoundGenerators do
-            if (not (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))) then continue end
-            function CheckOccupance(Pos)
+            if (not Generator:FindFirstChild("Progress")) then continue end
+            if (Generator.Progress.Value == 100) then continue end
+            local Prompt = Generator:FindFirstChild('Main') and Generator.Main:FindFirstChild('Prompt')
+            if (not Prompt) then continue end
+            if (not (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))) then return warn('root got destroyed while doing gens') end
+            if (not IsRoundLoaded()) then return warn('round unloaded while doing gens') end
+            Forsaken.Desynced = true
+            local function CheckOccupance(Pos)
                 if GetGameMap():GetAttribute('MapName') == 'PirateBay' and Pos == Generator.Positions.Right.Position then
                     return true
                 end
@@ -5096,10 +5122,6 @@ function CompleteGenerators()
                 return false
             end
             wait(0.3)
-            if (not Generator:FindFirstChild("Progress")) then continue end
-            if (Generator.Progress.Value == 100) then continue end
-            local Prompt = Generator:FindFirstChild('Main') and Generator.Main:FindFirstChild('Prompt')
-            if (not Prompt) then continue end
             local Now = tick()
             local CenterOccupied, RightOccupied, LeftOccupied =
                 CheckOccupance(Generator.Positions.Center.Position),
@@ -5144,8 +5166,10 @@ function CompleteGenerators()
                 wait()
             until (not Generator:FindFirstChild('Progress')) or Generator.Progress.Value == 100 or not LocalPlayer.PlayerGui:FindFirstChild('PuzzleUI')
         end
+        LocalPlayer.Character.HumanoidRootPart.CFrame = OldCF
     end)
     DoingAllGenerators = false
+    Forsaken.Desynced = false
     if Catsaken.Flags.GeneratorNotifications.CurrentValue then
         Rayfield:Notify({Title = "Complete every generator", Content = "All generators have been checked", Duration = 6})
     end
@@ -5204,7 +5228,7 @@ GeneratorsTab:CreateToggle({
     CurrentValue = false,
     Flag = 'GeneratorGridMod',
     Callback = NULL,
-    Tooltip = 'Default = 7x7'
+    ToolTip = 'Default = 7x7'
 })
 
 GeneratorsTab:CreateSlider({
@@ -5248,14 +5272,6 @@ GeneratorsTab:CreateButton({
     Callback = function()
         CompleteGenerators()
     end
-})
-
-GeneratorsTab:CreateToggle({
-    Name = 'Notifications',
-    CurrentValue = false,
-    Flag = 'GeneratorNotifications',
-    Callback = NULL,
-    TextMode = true
 })
 
 GeneratorsTab:CreateSection('Teleports')
@@ -5328,6 +5344,23 @@ GeneratorsTab:CreateSlider({
     CurrentValue = 0.08,
     Flag = 'GeneratorLegitPuzzleDelay',
     Callback = NULL
+})
+
+GeneratorsTab:CreateToggle({
+    Name = 'Notifications',
+    CurrentValue = false,
+    Flag = 'GeneratorNotifications',
+    Callback = NULL,
+    TextMode = true
+})
+
+GeneratorsTab:CreateToggle({
+    Name = 'Desync when autofarming',
+    CurrentValue = true,
+    Flag = 'DesyncWhenAutofarming',
+    Callback = NULL,
+    ToolTip = 'Usually autofarm generators uses invisibility to hide, but if someone spectates you then you\'re basically banned. This spoofs your position to make it look like you arent even moving, which is perfect for autofarm and is undetected',
+    TextMode = true
 })
 
 function AddBoxEsp(Character, ColorFlag, ToggleFlag, ShowHealth, ShowItems)
@@ -5885,12 +5918,62 @@ StaminaTab:CreateInput({
     end
 })
 
+StaminaTab:CreateToggle({
+    Name = 'Enable stamina settings ^',
+    CurrentValue = false,
+    Flag = 'StaminaSettingsEnabled',
+    Callback = NULL
+})
+
+StaminaTab:CreateSection('Sprinting')
+
+StaminaTab:CreateToggle({
+    Name = "Fast sprint (kick warning)",
+    CurrentValue = false,
+    Callback = NULL,
+    Flag = "FastSprint",
+    ToolTip = 'Super high chance of speedhack anticheat kick. Use if you want to, but expect to get kicked after a while.'
+})
+
+StaminaTab:CreateSlider({
+    Name = "└── Speed",
+    Range = {26, 30},
+    Increment = 1,
+    Suffix = '',
+    CurrentValue = 26,
+    Flag = 'SprintSpeed',
+    Callback = function()
+        if SprintModule.IsSprinting then
+            SprintModule.IsSprinting = false
+            SprintModule.__sprintedEvent:Fire(false)
+            SprintModule.IsSprinting = true
+            SprintModule.__sprintedEvent:Fire(true)
+        end
+    end
+})
+
 task.spawn(function()
+    local function GetConfig()
+        return require((LocalPlayer.Character.Parent.Name == 'Killers' and MainKillersPath or MainSurvivorsPath)[LocalPlayer.Character.Name].Config)
+    end
     while wait() do
-        for Name, Val in Values do
-            if (SprintModule[Name] ~= tonumber(Val)) then
-                SprintModule[Name] = tonumber(Val)
-                UpdateStamina()
+        if (Unloaded) then break end
+        local s,r=pcall(function()
+            if (Catsaken.Flags.FastSprint.CurrentValue) then
+                SprintModule.SprintSpeed = Catsaken.Flags.SprintSpeed.CurrentValue
+            elseif (LocalPlayer.Character and LocalPlayer.Character.Parent ~= IngamePlayers.Spectating) then
+                SprintModule.SprintSpeed = GetConfig().SprintSpeed
+            end
+        end)
+        if not s then
+            warn("error when patching sprint speed:", r)
+        end
+        if (Catsaken.Flags.StaminaSettingsEnabled.CurrentValue) then
+            for Name, Val in Values do
+                if (SprintModule[Name] ~= tonumber(Val)) then
+                    SprintModule[Name] = tonumber(Val)
+                    UpdateStamina()
+                end
             end
         end
     end
@@ -6322,6 +6405,13 @@ ConvenienceTab:CreateToggle({
 })
 
 ConvenienceTab:CreateToggle({
+    Name = 'Use dusekkaar protection through walls',
+    CurrentValue = false,
+    Flag = 'ProtectionBreakWall',
+    Callback = NULL
+})
+
+ConvenienceTab:CreateToggle({
     Name = 'Speed boost',
     CurrentValue = false,
     Flag = 'SmallSpeedBoost',
@@ -6510,7 +6600,7 @@ function DisableNoclip()
 end
 
 ConvenienceTab:CreateToggle({
-    Name = 'Demonic pursuit noclip',
+    Name = 'Demonic pursuit noclip (kick warning)',
     CurrentValue = false,
     Flag = 'DemonicPursuitNoclip',
     Callback = function()
@@ -6524,7 +6614,8 @@ ConvenienceTab:CreateToggle({
             end
         end)
     end,
-    Blatant = true
+    Blatant = true,
+    ToolTip = 'If you are trash, you could get stuck in a wall, and then get kicked'
 })
 
 ConvenienceTab:CreateToggle({
@@ -6535,7 +6626,7 @@ ConvenienceTab:CreateToggle({
 })
 
 ConvenienceTab:CreateToggle({
-    Name = 'Void rush noclip',
+    Name = 'Void rush noclip (kick warning)',
     CurrentValue = false,
     Flag = 'VoidRushNoclip',
     Callback = function()
@@ -6549,7 +6640,8 @@ ConvenienceTab:CreateToggle({
             end
         end)
     end,
-    Blatant = true
+    Blatant = true,
+    ToolTip = 'If you are trash, you could get stuck in a wall, and then get kicked'
 })
 
 ConvenienceTab:CreateToggle({
@@ -6557,6 +6649,22 @@ ConvenienceTab:CreateToggle({
     CurrentValue = false,
     Flag = 'VoidRushAntiCrash',
     Callback = NULL
+})
+
+ConvenienceTab:CreateToggle({
+    Name = 'Void rush control',
+    CurrentValue = false,
+    Flag = 'VoidRushControl',
+    Callback = function(Bool,is)
+        if (Bool) then
+            if not is then Rayfield:Notify({Title = 'Void rush control', Content = 'Wait until the next round to start for this feature to apply', Duration = 4}) end
+            NoliConfig.VoidRushInitialTurnDuration = 9999
+            NoliConfig.VoidRushInitialTurnMult = 9999
+        else
+            NoliConfig.VoidRushInitialTurnDuration = 1.5
+            NoliConfig.VoidRushInitialTurnMult = 6.6
+        end
+    end
 })
 
 -- Hook noli & guest 666 crash remotes
@@ -6664,7 +6772,8 @@ AutoblockTab:CreateSlider({
     Suffix = 'ms',
     CurrentValue = 0,
     Flag = 'AutoBlockMS',
-    Callback = NULL
+    Callback = NULL,
+    ToolTip = 'You might aswell just keep this at 0'
 })
 
 AutoblockTab:CreateSection('Visualizer')
@@ -6672,6 +6781,12 @@ AutoblockTab:CreateToggle({
     Name = 'Show visualizer',
     CurrentValue = true,
     Flag = 'AutoBlockVisualizer',
+    Callback = NULL
+})
+AutoblockTab:CreateToggle({
+    Name = '└── Always show',
+    CurrentValue = false,
+    Flag = 'AutoBlockVisualizerAlways',
     Callback = NULL
 })
 AutoblockTab:CreateSlider({
@@ -6738,22 +6853,29 @@ AutoblockTab:CreateSection('Block Settings')
 AutoblockTab:CreateLabel("Guest 1337 can not parry heavy attacks like mass infection, void rush, etc anymore. he only negates damage, so if you want to spare your block for an actual parry, just turn all these off")
 AutoblockTab:CreateToggle({
     Name = 'Block entanglement',
-    CurrentValue = true,
+    CurrentValue = false,
     Flag = 'AutoBlockEntanglement',
     Callback = NULL,
     TextMode = true
 })
 AutoblockTab:CreateToggle({
     Name = 'Block void rush',
-    CurrentValue = true,
+    CurrentValue = false,
     Flag = 'AutoBlockVoidRush',
     Callback = NULL,
     TextMode = true
 })
 AutoblockTab:CreateToggle({
     Name = 'Block walkspeed override',
-    CurrentValue = true,
+    CurrentValue = false,
     Flag = 'AutoBlockOverride',
+    Callback = NULL,
+    TextMode = true
+})
+AutoblockTab:CreateToggle({
+    Name = 'Block corrupt nature',
+    CurrentValue = false,
+    Flag = 'AutoBlockNature',
     Callback = NULL,
     TextMode = true
 })
@@ -6778,7 +6900,7 @@ function CheckInvis()
     if (IsKiller() and Catsaken.Flags.AutoFarmSurvivors.CurrentValue) then
         return false
     end
-    return DoingAllGenerators or (Catsaken.Flags.PartialInvisibility and Catsaken.Flags.PartialInvisibility.CurrentValue) or (DoAntiHit and (Catsaken.Flags.AntiHit and Catsaken.Flags.AntiHit.CurrentValue))
+    return Forsaken.Desynced or DoingAllGenerators or (Catsaken.Flags.PartialInvisibility and Catsaken.Flags.PartialInvisibility.CurrentValue) or (DoAntiHit and (Catsaken.Flags.AntiHit and Catsaken.Flags.AntiHit.CurrentValue))
 end
 
 function IsFacing(localRoot, targetRoot, rdot)
@@ -6832,7 +6954,7 @@ task.spawn(function()
         RunService.RenderStepped:Wait()
         pcall(function()
             local k = Forsaken.Killers[1]
-            if tostring(LocalPlayer.Character) ~= 'Guest1337' or not k or not (Catsaken.Flags.AutoBlockVisualizer.CurrentValue and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
+            if (tostring(LocalPlayer.Character) ~= 'Guest1337' and not Catsaken.Flags.AutoBlockVisualizerAlways.CurrentValue) or not k or not (Catsaken.Flags.AutoBlockVisualizer.CurrentValue and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
                 Box:SetAttribute("in", false)
                 Box.CFrame = CFrame.new(99999, 99999999, 9999)
                 return
@@ -6957,48 +7079,20 @@ function IsFacing2(localRoot, targetRoot, fDot, rDot)
     return forwardDot > (fDot or 0.7) and rightDot < (rDot or 0.4)
 end
 
-function SpyStuns(Char)
-    Char:GetAttributeChangedSignal('Invincible'):Connect(function(v)
-        if Char:GetAttribute("Invincible") == 1 then
-            if Char:GetAttribute("RecentAttackerTime") and tick() - tonumber(Char:GetAttribute("RecentAttackerTime")) <= 1 then
-                if Char == LocalPlayer.Character then return end
-                if Catsaken.Flags.StunSpy.CurrentValue then
-                    local timestunned = 0
-                    local attackerchar = Players[Char:GetAttribute("RecentAttacker")].Character
-                    if attackerchar.Name == "Shedletsky" then
-                        timestunned = require(MainSurvivorsPath.Shedletsky.Config).SlashStunTime
-                    elseif attackerchar.Name == "TwoTime" then
-                        timestunned = 2
-                    elseif attackerchar.Name == "Guest1337" and (Char.HumanoidRootPart:FindFirstChild("rbxassetid://13471740561") or Char.HumanoidRootPart:FindFirstChild("rbxassetid://116900970230089")) then
-                        timestunned = require(MainSurvivorsPath.Guest1337.Config).ParryStunTime
-                    end
-                    if timestunned == 0 then return warn("cant figure out what stunned") end
-                    timestunned = timestunned + 0.75 -- so forsaken usually takes like 1 second to let the killer actually move for some reason
-                    local bb = Instance.new("BillboardGui", Char.Head)
-                    bb.AlwaysOnTop = true
-                    bb.StudsOffset = Vector3.new(0, 2, 0)
-                    bb.Size = UDim2.new(1, 40, 1, 0)
-                    bb.Name = "stunspybb"
-                    local tl = Instance.new("TextLabel", bb)
-                    tl.Size = UDim2.new(1, 0, 1, 0)
-                    tl.TextSize = 20
-                    tl.Font = Enum.Font.LuckiestGuy
-                    tl.BackgroundTransparency = 1
-                    tl.TextColor3 = Color3.fromRGB(212, 0, 0)
-                    local start = tick()
-                    while timestunned - (tick() - start) > 0 do
-                        tl.Text = string.format("Stunned for %.2fs", timestunned - (tick() - start))
-                        task.wait()
-                    end
-                    bb:Destroy()
-                end
-            end
-        end
-    end)
-end
-
 local BlockAnims = {}
 
+function GetTrackLength(animator, assetId)
+    local animation = Instance.new("Animation")
+    animation.AnimationId = assetId
+    local track = animator:LoadAnimation(animation)
+    task.wait() 
+    local length = track.Length
+    track:Destroy()
+    animation:Destroy()
+    return length
+end
+
+---the holy function that carries everything in this script, you name it, and it does it
 function TrackAnimations(Char,IsSurvivor,IsNew)
     local Root = Char and Char:WaitForChild('HumanoidRootPart', 7)
     if (not Root) then return end
@@ -7056,7 +7150,48 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
         end
     end)
 
+    local SN = Char:GetAttribute('SkinName')
+    if SN == '' then SN = nil end
+    local defaultcharconfig = GetConfig()
+    local skincharconfig = SN and require(ReplicatedStorage.Assets.Skins[Char.Parent.Name][Char.Name][SN].Config)
+
     Animator.AnimationPlayed:Connect(function(track)
+        task.spawn(function()
+            if Char.Parent ~= Killers then return end -- hey quick fact survivors cant be stunned.
+            local stunnedanim = (skincharconfig and skincharconfig.Animations and skincharconfig.Animations.Stunned and skincharconfig.Animations.Stunned.Start) and skincharconfig.Animations.Stunned.Start or defaultcharconfig.Animations.Stunned.Start
+            local stunnedanimend = (skincharconfig and skincharconfig.Animations and skincharconfig.Animations.Stunned and skincharconfig.Animations.Stunned.End) and skincharconfig.Animations.Stunned.End or defaultcharconfig.Animations.Stunned.End
+            local stun_end_length = GetTrackLength(Animator, stunnedanimend)
+            if Catsaken.Flags.StunSpy.CurrentValue and track.Animation.AnimationId == stunnedanim then
+                local timestunned = 0
+                local attackerchar = Players[Char:GetAttribute("RecentAttacker")].Character
+                if attackerchar.Name == "Shedletsky" then
+                    timestunned = require(MainSurvivorsPath.Shedletsky.Config).SlashStunTime
+                elseif attackerchar.Name == "TwoTime" then
+                    timestunned = 2
+                elseif attackerchar.Name == "Guest1337" and (Char.HumanoidRootPart:FindFirstChild("rbxassetid://13471740561") or Char.HumanoidRootPart:FindFirstChild("rbxassetid://116900970230089")) then
+                    timestunned = require(MainSurvivorsPath.Guest1337.Config).ParryStunTime
+                end
+                if timestunned == 0 then return warn("cant figure out what stunned") end
+                timestunned = timestunned + stun_end_length -- recovery animation, got to wait
+                local bb = Instance.new("BillboardGui", Char.Head)
+                bb.AlwaysOnTop = true
+                bb.StudsOffset = Vector3.new(0, 2, 0)
+                bb.Size = UDim2.new(1, 40, 1, 0)
+                bb.Name = "stunspybb"
+                local tl = Instance.new("TextLabel", bb)
+                tl.Size = UDim2.new(1, 0, 1, 0)
+                tl.TextSize = 20
+                tl.Font = Enum.Font.LuckiestGuy
+                tl.BackgroundTransparency = 1
+                tl.TextColor3 = Color3.fromRGB(212, 0, 0)
+                local start = tick()
+                while timestunned - (tick() - start) > 0 do
+                    tl.Text = string.format("Stunned for %.2fs", timestunned - (tick() - start))
+                    task.wait()
+                end
+                bb:Destroy()
+            end
+        end)
         local AttackName
         for i, v in Forsaken.BlockMeta do
             if (i == track.Animation.AnimationId) then
@@ -7065,10 +7200,6 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
             end
         end
         if (Unloaded) then return end
-        local SN = Char:GetAttribute('SkinName')
-        if SN == '' then SN = nil end
-        local defaultcharconfig = GetConfig()
-        local skincharconfig = SN and require(ReplicatedStorage.Assets.Skins[Char.Parent.Name][Char.Name][SN].Config)
         local runanim1
         local runanim2
         if skincharconfig and skincharconfig.Animations and skincharconfig.Animations.InjuredRun then
@@ -7183,6 +7314,9 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                         end
                         Box.CFrame = Char.HumanoidRootPart.CFrame * CFrame.new((right - left) / 2, 0, -(front - back) / 2)
                         Box.Size = Vector3.new(left + right, 10, front + back)
+                        if (iswso) then
+                            break
+                        end
                         RunService.RenderStepped:Wait()
                     end
                     TweenService:Create(Box, TweenInfo.new(2, Enum.EasingStyle.Linear), {Transparency = 1})
@@ -7192,8 +7326,7 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
             end
         end)
         if (not table.find(Forsaken.AttackAnimations, track.Animation.AnimationId)) then return end
-        local KillerModel = Forsaken.Killers[1]
-        local KillerModel2 = GetClosestKiller(17)
+        local KillerModel = GetClosestKiller(999)
         function GetHitboxes()
             local Num = 0
             for i, Hitbox in workspace.Hitboxes:GetChildren() do
@@ -7212,9 +7345,12 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                 DoAntiHit = false
             end
         end)
-        if (KillerModel ~= nil) then
+        if (KillerModel ~= nil and Char == KillerModel) then
             local canBlock = true
             if (AttackName == 'Entanglement' and not Catsaken.Flags.AutoBlockEntanglement.CurrentValue) then
+                canBlock = false
+            end
+            if (AttackName == 'CorruptNature' and not Catsaken.Flags.AutoBlockNature.CurrentValue) then
                 canBlock = false
             end
             if (canBlock) then
@@ -7233,11 +7369,11 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
     end)
 end
 for _, Killer in Forsaken.Killers do
-    SpyStuns(Killer)
+    --SpyStuns(Killer)
     TrackAnimations(Killer,nil,true)
 end
 Killers.ChildAdded:Connect(function(Killer)
-    SpyStuns(Killer)
+    --SpyStuns(Killer)
     TrackAnimations(Killer)
 end)
 for _, Surv in Forsaken.Survivors do
@@ -7335,13 +7471,14 @@ PlayerTab:CreateToggle({
     Callback = function()
         task.spawn(function()
             while wait() and Catsaken.Flags.AutoUnsprint.CurrentValue do
-                if (Catsaken.Flags.AutoUnsprint.CurrentValue and SprintModule.Stamina < 3) then
+                if (Catsaken.Flags.AutoUnsprint.CurrentValue and SprintModule.Stamina <= 1) then
                     SprintModule.IsSprinting = false
                     SprintModule.__sprintedEvent:Fire(false)
                 end
             end
         end)
-    end
+    end,
+    ToolTip = 'Unsprints at 1 stamina, which makes it so you avoid the 2 second recovery at 0 stamina'
 })
 
 PlayerTab:CreateToggle({
@@ -7455,9 +7592,9 @@ PlayerTab:CreateToggle({
     Name = 'Veeronica control',
     CurrentValue = false,
     Flag = 'SkateTurningControl',
-    Callback = function(Bool)
+    Callback = function(Bool,is)
         if (Bool) then
-            Rayfield:Notify({Title = 'Veeronica control', Content = 'Wait until the next round to start for this feature to apply', Duration = 4})
+            if not is then Rayfield:Notify({Title = 'Veeronica control', Content = 'Wait until the next round to start for this feature to apply', Duration = 4}) end
             VeeronicaConfig.Sk8TurnControl = 6.5
         else
             VeeronicaConfig.Sk8TurnControl = 0.65
@@ -7663,6 +7800,28 @@ PlayerTab:CreateToggle({
 })
 
 PlayerTab:CreateSection('Invisibility')
+
+local oldFireserver
+oldFireserver = hookfunction(NetworkModule.FireServerConnection, newcclosure(function(self, ...)
+    if Unloaded then return oldFireserver(self, ...) end
+    local args = {...}
+    if args[1] == 'UpdateCharacterPosition' and Forsaken.Desynced then
+        return
+    end
+    if args[1] == 'DusekkarCancel' and Catsaken.Flags.ProtectionBreakWall.CurrentValue then
+        return
+    end
+    return oldFireserver(self, unpack(args))
+end))
+
+
+--[[UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if input.KeyCode == Enum.KeyCode.Backspace then
+        Forsaken.Desynced = not Forsaken.Desynced
+        warn("desync:", Forsaken.Desynced)
+    end
+end)]]
 
 if (identifyexecutor() ~= "Cosmic") then
     setthreadidentity(8)
@@ -7910,6 +8069,7 @@ function GrabTool(Tool)
         end
     end
     if (LocalPlayer.Backpack:FindFirstChild(Tool.Name) or ContainsItem) then return end
+    Forsaken.Desynced = true
     if (Root and Tool:FindFirstChild('ItemRoot')) then
         local OldCF = Root.CFrame
         Root.CFrame = Tool.ItemRoot.CFrame
@@ -7924,6 +8084,9 @@ function GrabTool(Tool)
             return warn("timed out while picking up item")
         end
         Root.CFrame = OldCF
+    end
+    if not DoingAllGenerators then
+        Forsaken.Desynced = false
     end
 end
 
@@ -8078,7 +8241,9 @@ MapTab:CreateToggle({
                 end)
             end
         end)
-    end
+    end,
+    Blatant = true,
+    ToolTip = 'Fair warning - This is not an AI auto-hunt. It teleports to all players and slams the m1 key until it kills them.'
 })
 
 MapTab:CreateToggle({
@@ -9263,12 +9428,12 @@ MiscTab:CreateInput({
    PlaceholderText = "Leave empty for none",
    RemoveTextAfterFocusLost = false,
    Flag = "CustomLMSFile",
-   Callback = function(text)
+   Callback = function(text,is)
         writefile("Catsaken/CustomLMSFile", text)
         if (text == '') then return end
         if (not isfile(text)) then
             Rayfield:Notify({Title = 'Incorrect file', Content = '"' .. text .. '" is not an existing file', Duration = 8, Image = 'ban'})
-        else
+        elseif (not is) then
             Rayfield:Notify({Title = 'Found file', Content = 'File located in workspace. Please make sure to change the selected lms theme to Custom', Duration = 8, Image = 'check'})
         end
    end
