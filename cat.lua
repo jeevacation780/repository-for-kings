@@ -106,6 +106,7 @@ local ShiftLockModule = require(ReplicatedStorage.Systems.Player.Game.SmoothShif
 local SidebarHandler = require(ReplicatedStorage.Systems.Player.UI.SidebarHandler)
 local VeeronicaConfig = require(ReplicatedStorage.Assets.Survivors.Veeronica.Config)
 local NoliConfig = require(ReplicatedStorage.Assets.Killers.Noli.Config)
+local SixerConfig = require(ReplicatedStorage.Assets.Killers.Sixer.Config)
 local CharacterReplication = require(ReplicatedStorage.Systems.Player.Game.CharacterReplication)
 local TabbedOutScare = ReplicatedStorage.Systems.Player.Miscellaneous.TabbedOutScare
 local TopbarPlus = require(ReplicatedStorage.Modules.Utilities.Icon)
@@ -4272,6 +4273,7 @@ else
     • Added desync option for autofarm (legit way)
     • Fixed an auto-block issue reacting to non-killers
     • Added noli turn control
+    • Added use dusekkar through walls
     • Updated stun spy detection (now animation-based)
     • Esp outline only toggle
     • Added reveal ability trajectorys
@@ -5927,7 +5929,7 @@ StaminaTab:CreateToggle({
 
 StaminaTab:CreateSection('Sprinting')
 
-StaminaTab:CreateToggle({
+--[[StaminaTab:CreateToggle({
     Name = "Fast sprint (kick warning)",
     CurrentValue = false,
     Callback = NULL,
@@ -5950,7 +5952,7 @@ StaminaTab:CreateSlider({
             SprintModule.__sprintedEvent:Fire(true)
         end
     end
-})
+})]]
 
 task.spawn(function()
     local function GetConfig()
@@ -5958,7 +5960,7 @@ task.spawn(function()
     end
     while wait() do
         if (Unloaded) then break end
-        local s,r=pcall(function()
+        --[[local s,r=pcall(function()
             if (Catsaken.Flags.FastSprint.CurrentValue) then
                 SprintModule.SprintSpeed = Catsaken.Flags.SprintSpeed.CurrentValue
             elseif (LocalPlayer.Character and LocalPlayer.Character.Parent ~= IngamePlayers.Spectating) then
@@ -5967,7 +5969,7 @@ task.spawn(function()
         end)
         if not s then
             warn("error when patching sprint speed:", r)
-        end
+        end]]
         if (Catsaken.Flags.StaminaSettingsEnabled.CurrentValue) then
             for Name, Val in Values do
                 if (SprintModule[Name] ~= tonumber(Val)) then
@@ -6669,6 +6671,7 @@ ConvenienceTab:CreateToggle({
 
 -- Hook noli & guest 666 crash remotes
 function TrackAttributes(Character)
+    if not Character then return end
     Character:GetAttributeChangedSignal('PursuitState'):Connect(function()
         if (Character:GetAttribute('PursuitState') == 'Dashing') then
             Forsaken.PursuitTracker = tick()
@@ -6684,8 +6687,6 @@ TrackAttributes(LocalPlayer.Character)
 LocalPlayer.CharacterAdded:Connect(TrackAttributes)
 
 local Old
-local SixerConfig = require(MainKillersPath.Sixer.Config)
-local NoliConfig = require(MainKillersPath.Noli.Config)
 
 -- Get and Hook the function that validates radius during dusekkars spawn protection
 local IsCharWithinRadius = debug.getupvalue(DusekkarBehavior.Created, 3)
@@ -7810,6 +7811,15 @@ oldFireserver = hookfunction(NetworkModule.FireServerConnection, newcclosure(fun
     end
     if args[1] == 'DusekkarCancel' and Catsaken.Flags.ProtectionBreakWall.CurrentValue then
         return
+    end
+    if (Catsaken.Flags.DemonicPursuitAntiCrash.CurrentValue and args[1] == (LocalPlayer.Name .. '666Crashed') and Forsaken.PursuitTracker) then
+        repeat wait() until (tick() - Forsaken.PursuitTracker >= SixerConfig.PursuitLength)
+        return oldFireserver(self, unpack(args))
+    end
+    if (Catsaken.Flags.VoidRushAntiCrash.CurrentValue and args[1] == (LocalPlayer.Name .. 'VoidRushCollision') and Forsaken.VoidRushTracker) then
+        print(Forsaken.VoidRushTracker)
+        repeat wait() until (tick() - Forsaken.VoidRushTracker >= NoliConfig.VoidRushDashLength)
+        return oldFireserver(self, unpack(args))
     end
     return oldFireserver(self, unpack(args))
 end))
@@ -9324,14 +9334,6 @@ Old = hookmetamethod(game, '__namecall', function(self, ...)
                 WaitAndReset('CoolkidActive')
             end
         end
-        return Old(self, unpack(Args))
-    end
-    if (Catsaken.Flags.DemonicPursuitAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. '666Crashed') and Forsaken.PursuitTracker) then
-        repeat wait() until (tick() - Forsaken.PursuitTracker >= SixerConfig.PursuitLength)
-        return Old(self, unpack(Args))
-    end
-    if (Catsaken.Flags.VoidRushAntiCrash.CurrentValue and Args[1] == (LocalPlayer.Name .. 'VoidRushCollision') and Forsaken.VoidRushTracker) then
-        repeat wait() until (tick() - Forsaken.VoidRushTracker >= NoliConfig.VoidRushDashLength)
         return Old(self, unpack(Args))
     end
     if (Catsaken.Flags.NoSprintTween.CurrentValue and not checkcaller() and self == TweenService and getnamecallmethod() == 'Create' and Args[1] == SprintModule.__speedMultiplier) then
