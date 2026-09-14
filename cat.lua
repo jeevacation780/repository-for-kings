@@ -107,6 +107,7 @@ local SidebarHandler = require(ReplicatedStorage.Systems.Player.UI.SidebarHandle
 local VeeronicaConfig = require(ReplicatedStorage.Assets.Survivors.Veeronica.Config)
 local GuestConfig = require(ReplicatedStorage.Assets.Survivors.Guest1337.Config)
 local NoliConfig = require(ReplicatedStorage.Assets.Killers.Noli.Config)
+local NosConfig = require(ReplicatedStorage.Assets.Killers.Nosferatu.Config)
 local SixerConfig = require(ReplicatedStorage.Assets.Killers.Sixer.Config)
 local c00lkiddConfig = require(ReplicatedStorage.Assets.Killers.c00lkidd.Config)
 local CharacterReplication = require(ReplicatedStorage.Systems.Player.Game.CharacterReplication)
@@ -4281,8 +4282,9 @@ else
     AboutTab:CreateSection('Changelog')
     AboutTab:CreateLabel([[-- Pinned --
 • Added cheater-detector (Still work in progress so suggest things to add to the detections or what to fix!)
-13/09/2026
+13/09/2026 - 14/09/2026
     • Added desync option for autofarm (legit way)
+    • Added infinite nos flying
     • Fixed an auto-block issue reacting to non-killers
     • Fixed an auto-block issue reacting to non-M1 attacks
     • Added guest 1337 audio changers file + id supported
@@ -4292,6 +4294,11 @@ else
     • Added use dusekkar through walls (fixed tho)
     • Added corrupt nature toggle for g1337
     • Added jane doe quest esp (doc/ring)
+    • Added delete/bring items
+    • Added instant stamina recovery
+    • Added walk over trails
+    • Added walk over digital footprint
+    • Added fast sprint (kick warning)
     • Updated stun spy detection (now animation-based)
     • Esp outline only toggle
     • Added reveal ability trajectorys
@@ -4378,6 +4385,7 @@ local Forsaken = {
     TaphDebris = {},
     BuildermanDebris = {},
     DoeDebris = {},
+    DoeTrailDebris = {},
     VeeDebris = {},
     AzureDebris = {},
     Spikes = {},
@@ -4521,7 +4529,7 @@ end
 Search('Slasher', {'Slash'}, nil, nil, {'GashingWoundStart', 'Behead'}) -- L forsaken, behead and gashing wound cant even be blocked now
 
 -- 1x1x1x1
-Search('1x1x1x1', {'Slash', 'Entanglement'}) -- another L, mass infection block nerfed to ass
+Search('1x1x1x1', {'Slash', 'Entanglement'}, nil, nil, {'MassInfection'}) -- another L, mass infection block nerfed to ass
 
 -- Nosferatu
 Search('Nosferatu', {'Slash', 'SlashAir'}, nil, nil, {'UppercutPullingLoop'})
@@ -4890,6 +4898,8 @@ task.spawn(function()
             ForsakenCopy.TaphDebris = {}
             ForsakenCopy.BuildermanDebris = {}
             ForsakenCopy.DoeDebris = {}
+            ForsakenCopy.DoeTrailDebris = {}
+            ForsakenCopy.NosDebris = {}
             ForsakenCopy.VeeDebris = {}
             ForsakenCopy.AzureDebris = {}
             ForsakenCopy.Spikes = {}
@@ -4916,9 +4926,9 @@ task.spawn(function()
                     table.insert(ForsakenCopy.Survivors, Survivor)
                 end
             end
-            for i, Item in ForsakenCopy.Items do
+            for i, Item in Forsaken.Items do
                 if ((Item.Parent and (Item.Parent.Parent == Survivors or Item.Parent.Name == 'Backpack')) or not Item.Parent) then
-                    table.remove(ForsakenCopy.Items, i)
+                    table.remove(Forsaken.Items, i)
                 end
             end
             for _, Object in GetGameMapObjects() do
@@ -4944,12 +4954,22 @@ task.spawn(function()
                             table.insert(ForsakenCopy.DoeDebris, ChildObject)
                         end
                     end
+                elseif (Object.Name:sub(-12) == 'JohnDoeTrail' and Object.Name:sub(1, -13) == GetKillerUsername()) then
+                    for _, ChildObject in pairs(Object:GetChildren()) do
+                        if (not table.find(ForsakenCopy.DoeTrailDebris, ChildObject)) then
+                            table.insert(ForsakenCopy.DoeTrailDebris, ChildObject)
+                        end
+                    end
+                elseif (Object.Name:sub(-6) == 'Puddle' and Object.Name:sub(1, -7) == GetKillerUsername() and not table.find(ForsakenCopy.NosDebris, Object)) then
+                    table.insert(ForsakenCopy.NosDebris, Object)
                 elseif (Object.Name:sub(-5) == 'Spray' and Players:FindFirstChild(Object.Name:sub(1, -6)) and not table.find(ForsakenCopy.VeeDebris, Object)) then
                     table.insert(ForsakenCopy.VeeDebris, Object)
                 elseif (Object.Name == 'SpikeCollision' and not table.find(ForsakenCopy.Spikes, Object)) then
                     table.insert(ForsakenCopy.Spikes, Object)
                 elseif ((Object.Name == 'VineModel' or Object.Name == 'GroundBulbModel') and not table.find(ForsakenCopy.AzureDebris, Object)) then
                     table.insert(ForsakenCopy.AzureDebris, Object)
+                elseif (Object:IsA('Tool') and not table.find(ForsakenCopy.Items, Object)) then
+                    table.insert(ForsakenCopy.Items, Object)
                 end
             end
             if (workspace.Map.Ingame:FindFirstChild('CurrencyLocations')) then
@@ -4975,6 +4995,8 @@ task.spawn(function()
             Forsaken.TaphDebris = {}
             Forsaken.BuildermanDebris = {}
             Forsaken.DoeDebris = {}
+            Forsaken.DoeTrailDebris = {}
+            Forsaken.NosDebris = {}
             Forsaken.VeeDebris = {}
             Forsaken.AzureDebris = {}
             Forsaken.Spikes = {}
@@ -5163,7 +5185,9 @@ function CompleteGenerators()
             if (not (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))) then return warn('root got destroyed while doing gens') end
             if (not IsRoundLoaded()) then return warn('round unloaded while doing gens') end
 
-            Forsaken.Desynced = true
+            if Catsaken.Flags.DesyncWhenAutofarming.CurrentValue then
+                Forsaken.Desynced = true
+            end
 
             local function CheckOccupance(Pos)
                 if GetGameMap():GetAttribute('MapName') == 'PirateBay' and Pos == Generator.Positions.Right.Position then
@@ -5691,7 +5715,14 @@ VisualsTab:CreateToggle({
     Flag = 'AzureEsp',
     Callback = NULL
 })
-
+--[[
+VisualsTab:CreateToggle({
+    Name = '└── Bulb/Vine Ranges',
+    CurrentValue = false,
+    Flag = 'AzureEspRange',
+    Callback = NULL
+})
+]]
 VisualsTab:CreateToggle({
     Name = 'Jane Doe Quest ESP',
     CurrentValue = false,
@@ -5971,7 +6002,7 @@ task.spawn(function()
         local TheThing = Forsaken.JaneDoeDoc or Forsaken.JaneDoeRing
         if TheThing then
             if (TheThing:FindFirstChildOfClass('BillboardGui')) then continue end
-            AddTextLabel(TheThing, 'JaneDoeQuestEspColor', 'JaneDoeQuestEsp', 'Document')
+            AddTextLabel(TheThing, 'JaneDoeQuestEspColor', 'JaneDoeQuestEsp', TheThing == Forsaken.JaneDoeDoc and 'Document' or 'Ring')
         end
     end
 end)
@@ -6062,9 +6093,9 @@ StaminaTab:CreateToggle({
     Callback = NULL
 })
 
---StaminaTab:CreateSection('Sprinting')
+StaminaTab:CreateSection('Sprinting')
 
---[[StaminaTab:CreateToggle({
+StaminaTab:CreateToggle({
     Name = "Fast sprint (kick warning)",
     CurrentValue = false,
     Callback = NULL,
@@ -6087,7 +6118,14 @@ StaminaTab:CreateSlider({
             SprintModule.__sprintedEvent:Fire(true)
         end
     end
-})]]
+})
+
+StaminaTab:CreateToggle({
+    Name = "Instant stamina recovery",
+    CurrentValue = false,
+    Callback = NULL,
+    Flag = "InstantStaminaRecover",
+})
 
 task.spawn(function()
     local function GetConfig()
@@ -6095,16 +6133,21 @@ task.spawn(function()
     end
     while wait() do
         if (Unloaded) then break end
-        --[[local s,r=pcall(function()
+        local s,r=pcall(function()
             if (Catsaken.Flags.FastSprint.CurrentValue) then
                 SprintModule.SprintSpeed = Catsaken.Flags.SprintSpeed.CurrentValue
             elseif (LocalPlayer.Character and LocalPlayer.Character.Parent ~= IngamePlayers.Spectating) then
-                SprintModule.SprintSpeed = GetConfig().SprintSpeed
+                SprintModule.SprintSpeed = GetConfig().SprintSpeed or 26
             end
         end)
         if not s then
-            warn("error when patching sprint speed:", r)
-        end]]
+            --warn("error when patching sprint speed:", r)
+        end
+        local s,r=pcall(function()
+            if (Catsaken.Flags.InstantStaminaRecover.CurrentValue) then
+                SprintModule.timeUntilStaminaRecovers = 0
+            end
+        end)
         if (Catsaken.Flags.StaminaSettingsEnabled.CurrentValue) then
             for Name, Val in Values do
                 if (SprintModule[Name] ~= tonumber(Val)) then
@@ -6356,7 +6399,8 @@ HitboxTab:CreateToggle({
     CurrentValue = false,
     Flag = 'HitboxExpander',
     Callback = NULL,
-    Blatant = true
+    Blatant = true,
+    ToolTip = 'From the victims perspective, you are teleporting and glitching over the place because thats how the expander works, so no you cannot use this while looking legit in any way'
 })
 
 HitboxTab:CreateSlider({
@@ -6825,6 +6869,20 @@ ConvenienceTab:CreateToggle({
     end
 })
 
+ConvenienceTab:CreateToggle({
+    Name = 'Infinite nos flying',
+    CurrentValue = false,
+    Flag = 'InfiniteNosFly',
+    Callback = function(Bool,is)
+        if (Bool) then
+            if not is then Rayfield:Notify({Title = 'Infinite nos flying', Content = 'Wait until the next round to start for this feature to apply', Duration = 4}) end
+            NosConfig.AscentFlight.Duration = 999
+        else
+            NosConfig.AscentFlight.Duration = 10
+        end
+    end
+})
+
 -- Hook noli & guest 666 crash remotes
 function TrackAttributes(Character)
     if not Character then return end
@@ -6898,7 +6956,7 @@ task.spawn(function()
         PingLabel:Set(`Your ping is {val/1000}s ({rank})`)
     end
 end)
-AutoblockTab:CreateLabel("Having speed boost enabled significantly decreases accuracy\ncoolkid M1 is nearly impossible to block so dont bother trying")
+AutoblockTab:CreateLabel("Having speed boost enabled decreases accuracy\ncoolkid's M1 is nearly impossible to block")
 AutoblockTab:CreateSection('Settings')
 AutoblockTab:CreateToggle({
     Name = 'Auto punch',
@@ -7131,7 +7189,7 @@ AutoblockTab:CreateInput({
     end
 })
 AutoblockTab:CreateInput({
-    Name = "Parry | Id",
+    Name = "Parry | ID",
     CurrentValue = "",
     PlaceholderText = "Text",
     RemoveTextAfterFocusLost = false,
@@ -7391,9 +7449,7 @@ function Counter(KillerModel, Root, track)
                 local Start = tick()
                 local RNG = Random.new()
                 while IsBlocking do
-                    if (not Catsaken.Flags.AntiBait.CurrentValue) then
-                        stareFunc(KillerModel)
-                    end
+                    stareFunc(KillerModel)
                     if LocalPlayer.Character.HumanoidRootPart:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) and GuestInfo.Sounds.BlockSuccess or DefaultGuest.Sounds.BlockSuccess) then
                         Success = true
                         IsBlocking = false
@@ -7740,6 +7796,7 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                         end
                         RunService.RenderStepped:Wait()
                     end
+                    Box:Destroy()
                 end
             end
         end)
@@ -8054,9 +8111,9 @@ task.spawn(function()
                     MagicVar = true -- prevent multiple notifications
                     repeat wait() until not NeedToEscapeOrReel()
                     if (IsKiller()) then
-                        Rayfield:Notify({Title = 'Blood Hook', Content = 'Automatically reeled survivor', Duration = 6, Image = tonumber('132244492243010')})
+                        Rayfield:Notify({Title = 'Blood Hook', Content = 'Automatically reeled survivor', Duration = 6, Image = 'hook'})
                     else
-                        Rayfield:Notify({Title = 'Blood Hook', Content = 'Successfully escaped', Duration = 5, Image = tonumber('132244492243010')})
+                        Rayfield:Notify({Title = 'Blood Hook', Content = 'Successfully escaped', Duration = 5, Image = 'hook'})
                     end
                     MagicVar = false
                 end)
@@ -8223,6 +8280,51 @@ PlayerTab:CreateToggle({
     Flag = 'RevealTrajectory',
     ToolTip = 'Shows you the path of abilities like mass infection, entanglement, walkspeed override, etc. so you can dodge it easier'
 })
+
+PlayerTab:CreateToggle({
+    Name = 'Walk over digital footprint',
+    CurrentValue = false,
+    Flag = 'WalkOverDF'
+})
+
+PlayerTab:CreateToggle({
+    Name = 'Walk over trails',
+    CurrentValue = false,
+    Flag = 'WalkOverTrail'
+})
+
+PlayerTab:CreateToggle({
+    Name = 'Walk over nos puddles',
+    CurrentValue = false,
+    Flag = 'WalkOverPuddles'
+})
+
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            if Catsaken.Flags.WalkOverDF.CurrentValue then
+                for i, v in pairs(Forsaken.DoeDebris) do
+                    warn(i,v)
+                    if v:FindFirstChild('TouchInterest') then v.TouchInterest:Destroy() end
+                end
+            end
+        end)
+        pcall(function()
+            if Catsaken.Flags.WalkOverTrail.CurrentValue then
+                for i, v in pairs(Forsaken.DoeTrailDebris) do
+                    if v:FindFirstChild('TouchInterest') then v.TouchInterest:Destroy() end
+                end
+            end
+        end)
+        pcall(function()
+            if Catsaken.Flags.WalkOverPuddles.CurrentValue then
+                for i, v in pairs(Forsaken.NosDebris) do
+                    if v:FindFirstChild('TouchInterest') then v.TouchInterest:Destroy() end
+                end
+            end
+        end)
+    end
+end)
 
 PlayerTab:CreateSection('Invisibility')
 
@@ -8513,7 +8615,7 @@ function GrabTool(Tool)
         end
     end
     if (LocalPlayer.Backpack:FindFirstChild(Tool.Name) or ContainsItem) then return end
-    Forsaken.Desynced = true
+    --Forsaken.Desynced = true
     if (Root and Tool:FindFirstChild('ItemRoot')) then
         local OldCF = Root.CFrame
         Root.CFrame = Tool.ItemRoot.CFrame
@@ -8530,13 +8632,13 @@ function GrabTool(Tool)
         Root.CFrame = OldCF
     end
     if not DoingAllGenerators then
-        Forsaken.Desynced = false
+        --Forsaken.Desynced = false
     end
 end
 
-function YoinkLoot()
+function YoinkLoot(yEA)
     if (IsKiller()) then return end
-    if (Catsaken.Flags.AutoRomania.CurrentValue) then
+    if (Catsaken.Flags.AutoRomania.CurrentValue or yEA) then
         GrabTool(SearchTool('BloxyCola'))
         GrabTool(SearchTool('Medkit'))
     end
@@ -8591,6 +8693,77 @@ function GrabCola()
     GrabTool(Cola)
 end
 
+local IsBringing
+local IsDeleting
+function BringItems()
+    if (IsBringing) then return end
+    if (Forsaken.GameState ~= 1) then return end
+    if (DoingAllGenerators) then return end
+    IsBringing = true
+    print('BringItems() result:', pcall(function()
+        local mypos = LocalPlayer.Character.HumanoidRootPart.CFrame
+        local myposv3 = LocalPlayer.Character.HumanoidRootPart.Position
+        for i, v in pairs(Forsaken.Items) do
+            local s = tick()
+            while tick() - s <= 1.5 do
+                local areallitemsnear = true
+                for i, v in pairs(Forsaken.Items) do
+                    if (myposv3 - v.ItemRoot.Position).magnitude >= 15 then
+                        areallitemsnear = false
+                    end
+                end
+                if areallitemsnear then
+                    break
+                end
+                LocalPlayer.Character.HumanoidRootPart.CFrame = v.ItemRoot.CFrame
+                task.spawn(function()
+                    GrabTool(v)
+                    Network.RemoteEvent:FireServer("DropItem", {v})
+                    task.wait(1)
+                end)
+                if isnetworkowner(v.ItemRoot) then
+                    warn("teleporting", v)
+                    v.ItemRoot.CFrame = mypos
+                    break
+                end
+                task.wait()
+            end
+            task.wait()
+        end
+        LocalPlayer.Character.HumanoidRootPart.CFrame = mypos
+    end))
+    IsBringing = false
+end
+function DeleteItems()
+    if (IsDeleting) then return end
+    if (Forsaken.GameState ~= 1) then return end
+    if (DoingAllGenerators) then return end
+    IsDeleting = true
+    print('DeleteItems() result:', pcall(function()
+        local mypos = LocalPlayer.Character.HumanoidRootPart.CFrame
+        for i, v in pairs(Forsaken.Items) do
+            local s = tick()
+            while tick() - s <= 1.5 do
+                LocalPlayer.Character.HumanoidRootPart.CFrame = v.ItemRoot.CFrame
+                task.spawn(function()
+                    GrabTool(v)
+                    task.wait(.3)
+                    Network.RemoteEvent:FireServer("DropItem", {v})
+                end)
+                if isnetworkowner(v.ItemRoot) then
+                    warn("deleting", v)
+                    v.ItemRoot.Velocity = Vector3.new(9999, 9999, 9999)
+                    break
+                end
+                task.wait()
+            end
+            task.wait()
+        end
+        LocalPlayer.Character.HumanoidRootPart.CFrame = mypos
+    end))
+    IsDeleting = false
+end
+
 MapTab:CreateButton({
     Name = 'Grab medkit',
     Callback = GrabMedkit
@@ -8599,6 +8772,18 @@ MapTab:CreateButton({
 MapTab:CreateButton({
     Name = 'Grab bloxy cola',
     Callback = GrabCola
+})
+
+MapTab:CreateButton({
+    Name = 'Bring items',
+    Callback = BringItems,
+    ToolTip = 'You need network ownership.'
+})
+
+MapTab:CreateButton({
+    Name = 'Delete items',
+    Callback = DeleteItems,
+    ToolTip = 'You need network ownership.'
 })
 
 MapTab:CreateToggle({
@@ -8884,7 +9069,9 @@ end
         Name = 'Clear list',
         Callback = function()
             for i, _ in pairs(cheatersnames) do
-                clearflags(Players[i])
+                if Players:FindFirstChild(i) then
+                    clearflags(Players[i])
+                end
             end
             cheaters, cheatersnames, anticheaterrors, numcheaters = {}, {}, {}, 0
         end,
