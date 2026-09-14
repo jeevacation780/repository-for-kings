@@ -108,9 +108,11 @@ local VeeronicaConfig = require(ReplicatedStorage.Assets.Survivors.Veeronica.Con
 local GuestConfig = require(ReplicatedStorage.Assets.Survivors.Guest1337.Config)
 local NoliConfig = require(ReplicatedStorage.Assets.Killers.Noli.Config)
 local SixerConfig = require(ReplicatedStorage.Assets.Killers.Sixer.Config)
+local c00lkiddConfig = require(ReplicatedStorage.Assets.Killers.c00lkidd.Config)
 local CharacterReplication = require(ReplicatedStorage.Systems.Player.Game.CharacterReplication)
 local TabbedOutScare = ReplicatedStorage.Systems.Player.Miscellaneous.TabbedOutScare
 local TopbarPlus = require(ReplicatedStorage.Modules.Utilities.Icon)
+local Util = require(ReplicatedStorage.Modules.Utilities.Util)
 local Ragdolls = require(ReplicatedStorage.Modules.Rendering.Ragdolls)
 local PlayerControls = require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
 -- Effects
@@ -179,9 +181,9 @@ local function itampered()
     local new = gettampers()+1
     writefile(tamperfile, string.char(new))
 end
-if gettampers() >= 10 then
+--[[if gettampers() >= 10 then
     writefile(blacklistfile, tostring(os.time()))
-end
+end]]
 local blacklist = isfile(blacklistfile) and tonumber(readfile(blacklistfile)) or 0
 if blacklist > 0 then
     if os.time() - blacklist >= 86400 then
@@ -223,10 +225,10 @@ local function triggered()
     end
     warn(("NO THANK YOU\n"):rep(100))
     itampered()
-    if gettampers() >= 3 then
+    --[[if gettampers() >= 3 then
         writefile(blacklistfile, tostring(os.time()))
         while true do kck("You have tampered with the script too many times. As a result, we have blacklisted you for 24 hours. Message mursufan1234 on discord") end
-    end
+    end]]
     kck('T⁠a⁠m⁠p⁠e⁠r⁠ ⁠d⁠e⁠t⁠e⁠c⁠t⁠e⁠d\nU⁠n⁠l⁠o⁠a⁠d⁠ ⁠a⁠n⁠y⁠ ⁠e⁠x⁠t⁠e⁠r⁠n⁠a⁠l⁠ ⁠s⁠c⁠r⁠i⁠p⁠t⁠s⁠ ⁠(⁠h⁠t⁠t⁠p⁠ ⁠s⁠p⁠y⁠,⁠ ⁠r⁠e⁠m⁠o⁠t⁠e⁠ ⁠s⁠p⁠y⁠,⁠ ⁠e⁠t⁠c⁠)⁠ ⁠a⁠n⁠d⁠ ⁠t⁠r⁠y⁠ ⁠a⁠g⁠a⁠i⁠n⁠.')
     task.wait(1)
     while true do
@@ -1399,8 +1401,15 @@ local mainuimodule = not ShouldUseOldUI and (function()
         TextLabel.FontFace = Font.fromName("Arial", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         TextLabel.Text = Name
         TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel.TextSize = 12.000
+        TextLabel.TextSize = 14.000
         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        local Gradient = Instance.new("UIGradient")
+        Gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 190, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 173, 80))
+        })
+        Gradient.Parent = TextLabel
         function _G.UpdGuiTitle()
             TextLabel.Text = type(_G.LUNAR_TITLE) == "string" and _G.LUNAR_TITLE or Name
         end
@@ -4145,7 +4154,7 @@ if not ShouldUseOldUI then
 end
 
 local Catsaken = Rayfield:CreateWindow({
-    Name = 'Catsaken V3 [Remastered]',
+    Name = 'Catsaken Remastered [V3.1]',
     Icon = getcustomasset("catsakenwoman.png"),
     LoadingTitle = 'Catsaken Remastered',
     LoadingSubtitle = 'V3',
@@ -4198,8 +4207,8 @@ end
 
 function FindAnimationAsset(ConfigModule, Name)
     local Module = require(ConfigModule)
-    if (not Module.Animations) then return warn('Module "' .. tostring(ConfigModule.Parent) .. '" does not have Animations') end
-    if (not Module.Animations[Name]) then return warn(Name .. ' is not an existing attack') end
+    if (not Module.Animations) then return --[[warn('Module "' .. tostring(ConfigModule.Parent) .. '" does not have Animations')]] end
+    if (not Module.Animations[Name]) then return --[[warn(Name .. ' is not an existing attack')]]   end
     return Module.Animations[Name]
 end
 
@@ -4275,10 +4284,14 @@ else
 13/09/2026
     • Added desync option for autofarm (legit way)
     • Fixed an auto-block issue reacting to non-killers
+    • Fixed an auto-block issue reacting to non-M1 attacks
+    • Added guest 1337 audio changers file + id supported
+    • Added extremely blatant auto bait!!
     • Added noli turn control
     • Added guest1337 turn control
-    • Added use dusekkar through walls
+    • Added use dusekkar through walls (fixed tho)
     • Added corrupt nature toggle for g1337
+    • Added jane doe quest esp (doc/ring)
     • Updated stun spy detection (now animation-based)
     • Esp outline only toggle
     • Added reveal ability trajectorys
@@ -4336,7 +4349,7 @@ local StaminaTab = Catsaken:CreateTab('Stamina', 'footprints')
 local SilentTab = Catsaken:CreateTab('Aimbot', 'crosshair')
 local HitboxTab = Catsaken:CreateTab('Hitboxes', 'sword')
 local ConvenienceTab = Catsaken:CreateTab('Convenience', 'leaf')
-local AutoblockTab = Catsaken:CreateTab('Auto Block', 'shield')
+local AutoblockTab = Catsaken:CreateTab('Guest 1337', 'shield')
 local PlayerTab = Catsaken:CreateTab('Self', 'user')
 local MapTab = Catsaken:CreateTab('Game', 'gamepad-2')
 local AntisTab = Catsaken:CreateTab('Antis', 'ban')
@@ -4355,6 +4368,8 @@ local Forsaken = {
     RoundStart = 0,
     HitboxesDuration = 0.31,
     Desynced = false,
+    JaneDoeDoc = nil,
+    JaneDoeRing = nil,
     RoundGenerators = {},
     Killers = {},
     Survivors = {},
@@ -4385,8 +4400,10 @@ local Forsaken = {
     EspAppliedToAzureDebris = {},
     ConstantImages = {},
     UsingWalkspeedOverride = false,
+    LungingWalkspeedOverride = false,
     WalkspeedOverrideAnimations = {},
     WalkspeedOverrideEndedAnims = {},
+    WalkspeedOverrideLoopAnims = {},
     PursuitTracker = nil
 }
 LocalPlayer.PlayerGui.TemporaryUI.ChildAdded:Connect(function(Object)
@@ -4560,22 +4577,33 @@ SSearch('TwoTime', {'LungeStart'})
 do
     local Anims = Forsaken.WalkspeedOverrideAnimations
     local Anims2 = Forsaken.WalkspeedOverrideEndedAnims
+    local Anims3 = Forsaken.WalkspeedOverrideLoopAnims
     table.insert(Anims, require(MainKillersPath.c00lkidd.Config).Animations.WalkspeedOverrideStart)
+    table.insert(Anims2, require(MainKillersPath.c00lkidd.Config).Animations.WalkspeedOverrideHit)
+    table.insert(Anims2, require(MainKillersPath.c00lkidd.Config).Animations.WalkspeedOverrideMiss)
+    table.insert(Anims3, require(MainKillersPath.c00lkidd.Config).Animations.WalkspeedOverrideLoop)
     for i, v in SkinsPathE['c00lkidd']:GetChildren() do
         if (not v:FindFirstChild('Config')) then continue end
         local Module = require(v:FindFirstChild('Config'))
         if (not Module.Animations) then continue end
-        if (not Module.Animations.WalkspeedOverrideStart) then continue end
-        if (not Module.Animations.WalkspeedOverrideHit) then continue end
-        if (not Module.Animations.WalkspeedOverrideMiss) then continue end
-        if (not table.find(Anims, Module.Animations.WalkspeedOverrideStart)) then
-            table.insert(Anims, Module.Animations.WalkspeedOverrideStart)
+        if (Module.Animations.WalkspeedOverrideStart) then
+            if (not table.find(Anims, Module.Animations.WalkspeedOverrideStart)) then
+                table.insert(Anims, Module.Animations.WalkspeedOverrideStart)
+            end
         end
-        if (not table.find(Anims2, Module.Animations.WalkspeedOverrideHit)) then
-            table.insert(Anims2, Module.Animations.WalkspeedOverrideHit)
+        if (Module.Animations.WalkspeedOverrideHit) then
+            if (not table.find(Anims2, Module.Animations.WalkspeedOverrideHit)) then
+                table.insert(Anims2, Module.Animations.WalkspeedOverrideHit)
+            end
         end
-        if (not table.find(Anims2, Module.Animations.WalkspeedOverrideMiss)) then
-            table.insert(Anims2, Module.Animations.WalkspeedOverrideMiss)
+        if (Module.Animations.WalkspeedOverrideMiss) then
+            if (not table.find(Anims2, Module.Animations.WalkspeedOverrideMiss)) then
+                table.insert(Anims2, Module.Animations.WalkspeedOverrideMiss)
+            end
+        end
+        if (not Module.Animations.WalkspeedOverrideLoop) then continue end
+        if (not table.find(Anims3, Module.Animations.WalkspeedOverrideLoop)) then
+            table.insert(Anims3, Module.Animations.WalkspeedOverrideLoop)
         end
     end
     task.spawn(function()
@@ -4586,8 +4614,9 @@ do
         end
     end)
 end
-print("inserted", #Forsaken.M1Animations, 'walkspeed override start animations')
-print("inserted", #Forsaken.M1Animations, 'walkspeed override end animations')
+print("inserted", #Forsaken.WalkspeedOverrideAnimations, 'walkspeed override start animations')
+print("inserted", #Forsaken.WalkspeedOverrideEndedAnims, 'walkspeed override end animations')
+print("inserted", #Forsaken.WalkspeedOverrideLoopAnims, 'walkspeed override loop animations')
 print("inserted", #Forsaken.M1Animations, 'M1 animations')
 
 function IsRoundLoaded()
@@ -4864,6 +4893,17 @@ task.spawn(function()
             ForsakenCopy.VeeDebris = {}
             ForsakenCopy.AzureDebris = {}
             ForsakenCopy.Spikes = {}
+            ForsakenCopy.JaneDoeDoc = nil
+            ForsakenCopy.JaneDoeRing = nil
+            for i, v in pairs(workspace:GetChildren()) do
+                if v.Name == 'Model' and v:IsA('MeshPart') then
+                    if v.MeshId == JaneDoeRingMesh then
+                        ForsakenCopy.JaneDoeRing = v
+                    elseif v.MeshId == JaneDoeDocMesh then
+                        ForsakenCopy.JaneDoeDoc = v
+                    end
+                end
+            end
             for _, Killer in Killers:GetChildren() do
                 if (Killer:GetAttribute("Username") ~= nil) then
                     if (not table.find(ForsakenCopy.Killers, Killer)) then
@@ -4938,6 +4978,8 @@ task.spawn(function()
             Forsaken.VeeDebris = {}
             Forsaken.AzureDebris = {}
             Forsaken.Spikes = {}
+            Forsaken.JaneDoeDoc = nil
+            Forsaken.JaneDoeRing = nil
         end
         UpdateCompleted = true
     end
@@ -5103,20 +5145,26 @@ function CompleteGenerators()
     end
     if (DoingAllGenerators) then return end
     if (IsKiller()) then return end
+
     local OldCF = LocalPlayer.Character.HumanoidRootPart.CFrame
     DoingAllGenerators = true
+
     if Catsaken.Flags.DesyncWhenAutofarming.CurrentValue then
         Forsaken.Desynced = true
     end
+
     pcall(function()
         for _, Generator in Forsaken.RoundGenerators do
             if (not Generator:FindFirstChild("Progress")) then continue end
             if (Generator.Progress.Value == 100) then continue end
+
             local Prompt = Generator:FindFirstChild('Main') and Generator.Main:FindFirstChild('Prompt')
             if (not Prompt) then continue end
             if (not (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))) then return warn('root got destroyed while doing gens') end
             if (not IsRoundLoaded()) then return warn('round unloaded while doing gens') end
+
             Forsaken.Desynced = true
+
             local function CheckOccupance(Pos)
                 if GetGameMap():GetAttribute('MapName') == 'PirateBay' and Pos == Generator.Positions.Right.Position then
                     return true
@@ -5128,14 +5176,17 @@ function CompleteGenerators()
                 end
                 return false
             end
+
             wait(0.3)
+
             local Now = tick()
             local CenterOccupied, RightOccupied, LeftOccupied =
                 CheckOccupance(Generator.Positions.Center.Position),
                 CheckOccupance(Generator.Positions.Right.Position),
                 CheckOccupance(Generator.Positions.Left.Position)
-            
+
             if (CenterOccupied and RightOccupied and LeftOccupied) then continue end
+
             if (not CenterOccupied) then
                 LocalPlayer.Character.HumanoidRootPart.CFrame = Generator.Positions.Center.CFrame
             elseif (not RightOccupied) then
@@ -5143,24 +5194,31 @@ function CompleteGenerators()
             else
                 LocalPlayer.Character.HumanoidRootPart.CFrame = Generator.Positions.Left.CFrame
             end
+
             LocalPlayer.Character.Humanoid:MoveTo(Generator.Main.Position)
+
             repeat
                 fireproximityprompt(Prompt)
                 wait(0.5)
             until tick() - Now >= 7 or LocalPlayer.PlayerGui:FindFirstChild('PuzzleUI')
+
             if (tick() - Now >= 7) then
                 warn('timed out waiting for response')
                 continue
             end
+
             task.wait(0.4)
+
             if not (LocalPlayer.PlayerGui:FindFirstChild('PuzzleUI') and LocalPlayer.PlayerGui:FindFirstChild('PuzzleUI').Enabled) then
                 continue
             end
+
             task.spawn(function()
                 local Cur
                 while wait() and Generator:FindFirstChild('Progress') and Generator.Progress.Value ~= 100 and LocalPlayer.PlayerGui:FindFirstChild('PuzzleUI') do
                     if (Forsaken.CurrentPuzzle == Cur) then continue end
                     Cur = Forsaken.CurrentPuzzle
+
                     if (not Catsaken.Flags.AutoCompleteGenerators.CurrentValue) then
                         local Success, Res = pcall(AutoGenerator, Forsaken.CurrentPuzzle, true)
                         if (not Success) then
@@ -5169,16 +5227,39 @@ function CompleteGenerators()
                     end
                 end
             end)
+
             repeat
                 wait()
             until (not Generator:FindFirstChild('Progress')) or Generator.Progress.Value == 100 or not LocalPlayer.PlayerGui:FindFirstChild('PuzzleUI')
         end
+
         LocalPlayer.Character.HumanoidRootPart.CFrame = OldCF
+
+        local AllDone = true
+
+        for _, Generator in Forsaken.RoundGenerators do
+            if (Generator:FindFirstChild('Progress') and Generator.Progress.Value ~= 100) then
+                AllDone = false
+                break
+            end
+        end
+
+        if (not AllDone) then
+            DoingAllGenerators = false
+            CompleteGenerators()
+            return
+        end
     end)
+
     DoingAllGenerators = false
     Forsaken.Desynced = false
+
     if Catsaken.Flags.GeneratorNotifications.CurrentValue then
-        Rayfield:Notify({Title = "Complete every generator", Content = "All generators have been checked", Duration = 6})
+        Rayfield:Notify({
+            Title = "Complete every generator",
+            Content = "All generators have been checked",
+            Duration = 6
+        })
     end
 end
 
@@ -5610,14 +5691,14 @@ VisualsTab:CreateToggle({
     Flag = 'AzureEsp',
     Callback = NULL
 })
---[[
+
 VisualsTab:CreateToggle({
     Name = 'Jane Doe Quest ESP',
     CurrentValue = false,
-    Flag = 'JaneDoeQuestESP',
+    Flag = 'JaneDoeQuestEsp',
     Callback = NULL
 })
-]]
+
 VisualsTab:CreateSection('Esp Colors')
 
 VisualsTab:CreateColorPicker({
@@ -5697,6 +5778,13 @@ VisualsTab:CreateColorPicker({
     Callback = NULL
 })
 
+VisualsTab:CreateColorPicker({
+    Name = 'Quest Color', -- doc/ring
+    Color = Color3.fromRGB(186, 119, 52),
+    Flag = 'JaneDoeQuestEspColor',
+    Callback = NULL
+})
+
 for _, Killer in Forsaken.Killers do
     if (Killer:GetAttribute("Username") == LocalPlayer.Name) then continue end
     AddBoxEsp(Killer, 'KillerEspColor', 'KillerEsp')
@@ -5721,6 +5809,34 @@ workspace.Map.Ingame.ChildAdded:Connect(function(Entity)
     if (Entity.Name ~= 'PizzaDeliveryRig' and Entity.Name ~= '1x1x1x1Zombie') then return end
     AddBoxEsp(Entity, 'EntityEspColor', 'EntityEsp')
 end)
+
+function InterceptAudio(v, newid)
+    warn("intercepting", v, "with", newid)
+    v:Stop()
+    v.SoundId = newid
+    v:Play()
+end
+
+function AddTextLabel(Object, ColorFlag, OptionFlag, Display)
+    local bb = Instance.new("BillboardGui", Object)
+    bb.AlwaysOnTop = true
+    bb.StudsOffset = Vector3.new(0, 2, 0)
+    bb.Size = UDim2.new(1, 40, 1, 0)
+    bb.Name = Display .. 'EspTL'
+    local tl = Instance.new("TextLabel", bb)
+    tl.Size = UDim2.new(1, 0, 1, 0)
+    tl.TextSize = 14
+    tl.Font = Enum.Font.ArialBold
+    tl.BackgroundTransparency = 1
+    tl.Text = Display
+    task.spawn(function()
+        while Object.Parent and Catsaken.Flags[OptionFlag].CurrentValue do
+            tl.TextColor3 = Catsaken.Flags[ColorFlag].Color
+            task.wait()
+        end
+        bb:Destroy()
+    end)
+end
 
 task.spawn(function()
     while wait(0.1) do
@@ -5849,6 +5965,13 @@ task.spawn(function()
             if (FuckingTable[Debris]) then continue end
             FuckingTable[Debris] = true
             AddHighlightEsp(Debris, 'AzureEspColor', false, 'AZUREHIGHLIGHT')
+        end
+        -- Esp jane
+        if (Unloaded) then return end
+        local TheThing = Forsaken.JaneDoeDoc or Forsaken.JaneDoeRing
+        if TheThing then
+            if (TheThing:FindFirstChildOfClass('BillboardGui')) then continue end
+            AddTextLabel(TheThing, 'JaneDoeQuestEspColor', 'JaneDoeQuestEsp', 'Document')
         end
     end
 end)
@@ -6548,20 +6671,20 @@ ConvenienceTab:CreateToggle({
             originalValues[player.UserId] = {}
         end;
         for _, key in ipairs(paths) do
-            local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+            local value = player:WaitForChild('PlayerData'):WaitForChild('Settings'):WaitForChild('Privacy'):FindFirstChild(key)
             originalValues[player.UserId][key] = value.Value
         end
     end;
     local function reveal(player)
         for _, key in ipairs(paths) do
-            local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+            local value = player:WaitForChild('PlayerData'):WaitForChild('Settings'):WaitForChild('Privacy'):FindFirstChild(key)
             value.Value = false
         end
     end;
     local function restore(player)
         if originalValues[player.UserId] then
             for key, val in pairs(originalValues[player.UserId]) do
-                local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+                local value = player:WaitForChild('PlayerData'):WaitForChild('Settings'):WaitForChild('Privacy'):FindFirstChild(key)
                 value.Value = val
             end
         end
@@ -6730,7 +6853,7 @@ Old = hookfunction(IsCharWithinRadius, newcclosure(function(Player, Mag, _)
 end))
 
 -- Auto block
-AutoblockTab:CreateSection('Auto block')
+AutoblockTab:CreateSection('Auto Block')
 AutoblockTab:CreateToggle({
     Name = 'Auto block',
     CurrentValue = false,
@@ -6761,16 +6884,35 @@ AutoblockTab:CreateToggle({
 local PingLabel = AutoblockTab:CreateLabel("Ping: 0ms")
 task.spawn(function()
     while wait() do
-        PingLabel:Set(`Your ping is {Stats.PerformanceStats.Ping:GetValue()/1000}s`)
+        local val = Stats.PerformanceStats.Ping:GetValue()
+        local rank = ""
+        if val <= 40 then
+            rank = "Best"
+        elseif val <= 70 then
+            rank = "Good"
+        elseif val <= 100 then
+            rank = "Decent"
+        else
+            rank = "Bad, try finding a new server"
+        end
+        PingLabel:Set(`Your ping is {val/1000}s ({rank})`)
     end
 end)
-AutoblockTab:CreateLabel("Having speed boost enabled significantly decreases accuracy")
+AutoblockTab:CreateLabel("Having speed boost enabled significantly decreases accuracy\ncoolkid M1 is nearly impossible to block so dont bother trying")
 AutoblockTab:CreateSection('Settings')
 AutoblockTab:CreateToggle({
     Name = 'Auto punch',
     CurrentValue = true,
     Flag = 'AutoBlockPunch',
     Callback = NULL
+})
+AutoblockTab:CreateToggle({
+    Name = 'Anti-bait',
+    CurrentValue = false,
+    Flag = 'AntiBait',
+    Callback = NULL,
+    Blatant = true,
+    ToolTip = 'This is not legit. And it will never be. With the right settings and HDT on, you wont get baited. This feature teleports your character to the killer to get parries'
 })
 
 AutoblockTab:CreateToggle({
@@ -6846,7 +6988,7 @@ AutoblockTab:CreateSlider({
     Range = {0, 18},
     Increment = 1,
     Suffix = '',
-    CurrentValue = 9,
+    CurrentValue = 17,
     Flag = 'VisualizerFront',
     Callback = NULL
 })
@@ -6864,7 +7006,7 @@ AutoblockTab:CreateSlider({
     Range = {0, 9},
     Increment = 1,
     Suffix = '',
-    CurrentValue = 6,
+    CurrentValue = 0,
     Flag = 'VisualizerFrontPlus',
     Callback = NULL
 })
@@ -6927,6 +7069,216 @@ AutoblockTab:CreateToggle({
     Callback = NULL,
     TextMode = true
 })
+
+
+AutoblockTab:CreateSection('Audio Changers', 'Right')
+AutoblockTab:CreateLabel('empty = off')
+local audiochanger_Block_File = ""
+local audiochanger_Block_Id = ""
+local audiochanger_Parry_File = ""
+local audiochanger_Parry_Id = ""
+local audiochanger_Punch_File = ""
+local audiochanger_Punch_Id = ""
+AutoblockTab:CreateInput({
+    Name = "Block Success | ID",
+    CurrentValue = "",
+    PlaceholderText = "Number/Text",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BlockSuccessID",
+    Callback = function(text)
+        if text == '' then
+            audiochanger_Block_Id = ''
+            return
+        end
+        if tonumber(text) then
+            audiochanger_Block_Id = 'rbxassetid://' .. text
+            pcall(function()
+                ContentProvider:PreloadAsync({audiochanger_Block})
+            end)
+            return
+        end
+        if text:find('rbxassetid://') or text:find('http://www.roblox.com/asset/') then
+            audiochanger_Block_Id = text
+            pcall(function()
+                ContentProvider:PreloadAsync({audiochanger_Block})
+            end)
+        else
+            audiochanger_Block_Id = ''
+        end
+    end
+})
+AutoblockTab:CreateInput({
+    Name = "Block Success | File",
+    CurrentValue = "",
+    PlaceholderText = "Text",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BlockSuccessFile",
+    Callback = function(text,is)
+        if text == '' then
+            audiochanger_Block_File = ''
+            return
+        end
+        if (not isfile(text)) then
+            audiochanger_Block_File = ''
+            return Rayfield:Notify({Title = 'Incorrect file (audio changer)', Content = '"' .. text .. '" is not an existing file', Duration = 8, Image = 'ban'})
+        elseif (not is) then
+            Rayfield:Notify({Title = 'Found file', Content = 'File located in workspace.', Duration = 8, Image = 'check'})
+        end
+        audiochanger_Block_File = getcustomasset(text)
+        pcall(function()
+            ContentProvider:PreloadAsync({audiochanger_Block_File})
+        end)
+    end
+})
+AutoblockTab:CreateInput({
+    Name = "Parry | Id",
+    CurrentValue = "",
+    PlaceholderText = "Text",
+    RemoveTextAfterFocusLost = false,
+    Flag = "ParryFile",
+    Callback = function(text,is)
+        if text == '' then
+            audiochanger_Parry_Id = ''
+            return
+        end
+        if tonumber(text) then
+            audiochanger_Parry_Id = 'rbxassetid://' .. text
+            pcall(function()
+                ContentProvider:PreloadAsync({audiochanger_Parry_Id})
+            end)
+            return
+        end
+        if text:find('rbxassetid://') or text:find('http://www.roblox.com/asset/') then
+            audiochanger_Parry_Id = text
+            pcall(function()
+                ContentProvider:PreloadAsync({audiochanger_Block})
+            end)
+        else
+            audiochanger_Parry_Id = ''
+        end
+    end
+})
+AutoblockTab:CreateInput({
+    Name = "Parry | File",
+    CurrentValue = "",
+    PlaceholderText = "Number/Text",
+    RemoveTextAfterFocusLost = false,
+    Flag = "ParryID",
+    Callback = function(text,is)
+        if text == '' then
+            audiochanger_Parry_File = ''
+            return
+        end
+        if (not isfile(text)) then
+            audiochanger_Parry_File = ''
+            return Rayfield:Notify({Title = 'Incorrect file (audio changer)', Content = '"' .. text .. '" is not an existing file', Duration = 8, Image = 'ban'})
+        elseif (not is) then
+            Rayfield:Notify({Title = 'Found file', Content = 'File located in workspace.', Duration = 8, Image = 'check'})
+        end
+        audiochanger_Parry_File = getcustomasset(text)
+        pcall(function()
+            ContentProvider:PreloadAsync({audiochanger_Parry_File})
+        end)
+    end
+})
+local audiochanger_Punch_File = ""
+local audiochanger_Punch_Id = ""
+
+AutoblockTab:CreateInput({
+    Name = "Punch | ID",
+    CurrentValue = "",
+    PlaceholderText = "Number/Text",
+    RemoveTextAfterFocusLost = false,
+    Flag = "PunchID",
+    Callback = function(text,is)
+        if text == '' then
+            audiochanger_Punch_Id = ''
+            return
+        end
+        if tonumber(text) then
+            audiochanger_Punch_Id = 'rbxassetid://' .. text
+            pcall(function()
+                ContentProvider:PreloadAsync({audiochanger_Punch_Id})
+            end)
+            return
+        end
+        if text:find('rbxassetid://') or text:find('http://www.roblox.com/asset/') then
+            audiochanger_Punch_Id = text
+            pcall(function()
+                ContentProvider:PreloadAsync({audiochanger_Punch_Id})
+            end)
+        else
+            audiochanger_Punch_Id = ''
+        end
+    end
+})
+AutoblockTab:CreateInput({
+    Name = "Punch | File",
+    CurrentValue = "",
+    PlaceholderText = "Text",
+    RemoveTextAfterFocusLost = false,
+    Flag = "PunchFile",
+    Callback = function(text,is)
+        if text == '' then
+            audiochanger_Punch_File = ''
+            return
+        end
+        if (not isfile(text)) then
+            audiochanger_Punch_File = ''
+            return Rayfield:Notify({Title = 'Incorrect file (audio changer)', Content = '"' .. text .. '" is not an existing file', Duration = 8, Image = 'ban'})
+        elseif (not is) then
+            Rayfield:Notify({Title = 'Found file', Content = 'File located in workspace.', Duration = 8, Image = 'check'})
+        end
+        audiochanger_Punch_File = getcustomasset(text)
+        pcall(function()
+            ContentProvider:PreloadAsync({audiochanger_Punch_File})
+        end)
+    end
+})
+
+--tracksound
+IngamePlayers.DescendantAdded:Connect(function(v)
+    if (Unloaded) then return end
+    pcall(function()
+        local SN = LocalPlayer.Character:GetAttribute("SkinName")
+        if SN == "" then
+            SN = nil
+        end
+        local DefaultGuest = require(MainSurvivorsPath.Guest1337.Config)
+        local GuestInfo = SN and require(ReplicatedStorage.Assets.Skins.Survivors.Guest1337[SN].Config) or DefaultGuest
+        local Char = LocalPlayer.Character
+        if v:IsA("Sound") and v.Name == ((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) and GuestInfo.Sounds.BlockSuccess or DefaultGuest.Sounds.BlockSuccess) then
+            local changed = false
+            if audiochanger_Block_Id ~= "" then
+                changed = true
+                InterceptAudio(v, audiochanger_Block_Id)
+            end
+            if audiochanger_Block_File ~= "" and not changed then
+                InterceptAudio(v, audiochanger_Block_File)
+            end
+        end
+        if v:IsA("Sound") and v.SoundId == ((GuestInfo.Sounds and GuestInfo.Sounds.Parry) and GuestInfo.Sounds.Parry or DefaultGuest.Sounds.Parry) then
+            local changed = false
+            if audiochanger_Parry_Id ~= "" then
+                changed = true
+                InterceptAudio(v, audiochanger_Parry_Id)
+            end
+            if audiochanger_Parry_File ~= "" and not changed then
+                InterceptAudio(v, audiochanger_Parry_File)
+            end
+        end
+        if v:IsA("Sound") and v.SoundId == ((GuestInfo.Sounds and GuestInfo.Sounds.Punch) and GuestInfo.Sounds.Punch or DefaultGuest.Sounds.Punch) then
+            local changed = false
+            if audiochanger_Punch_Id ~= "" then
+                changed = true
+                InterceptAudio(v, audiochanger_Punch_Id)
+            end
+            if audiochanger_Punch_File ~= "" and not changed then
+                InterceptAudio(v, audiochanger_Punch_File)
+            end
+        end
+    end)
+end)
 
 local DoAntiHit = false
 
@@ -7037,9 +7389,12 @@ function Counter(KillerModel, Root, track)
             pcall(function()
                 local Success
                 local Start = tick()
+                local RNG = Random.new()
                 while IsBlocking do
-                    stareFunc(KillerModel)
-                    if LocalPlayer.Character.HumanoidRootPart:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) or DefaultGuest.Sounds.BlockSuccess) then
+                    if (not Catsaken.Flags.AntiBait.CurrentValue) then
+                        stareFunc(KillerModel)
+                    end
+                    if LocalPlayer.Character.HumanoidRootPart:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.BlockSuccess) and GuestInfo.Sounds.BlockSuccess or DefaultGuest.Sounds.BlockSuccess) then
                         Success = true
                         IsBlocking = false
                         if Catsaken.Flags.AutoBlockNotifications.CurrentValue then
@@ -7051,8 +7406,20 @@ function Counter(KillerModel, Root, track)
                         end
                         break
                     end
-                    if Catsaken.Flags.HitboxDragTech.CurrentValue and tick() - Start <= Forsaken.HitboxesDuration then
-                        LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
+                    if (Catsaken.Flags.AntiBait.CurrentValue or Catsaken.Flags.HitboxDragTech.CurrentValue) and tick() - Start <= Forsaken.HitboxesDuration then
+                        if (Catsaken.Flags.AntiBait.CurrentValue) then
+                            local HumanoidRootPart = LocalPlayer.Character.HumanoidRootPart
+                            local ping = tonumber(Stats.PerformanceStats.Ping:GetValue()) / 1000
+                            local randomOffset = Vector3.new(RNG:NextNumber(-1.5, 1.5), 0, RNG:NextNumber(-1.5, 1.5))
+                            local predicted = KillerModel.HumanoidRootPart.Position + randomOffset + (KillerModel.HumanoidRootPart.Velocity * (ping * 1.25))
+                            local neededVelocity = (predicted - HumanoidRootPart.Position) / (ping * 2)
+                            local oldVelocity = HumanoidRootPart.Velocity
+                            HumanoidRootPart.Velocity = neededVelocity
+                            RunService.RenderStepped:Wait()
+                            HumanoidRootPart.Velocity = oldVelocity
+                        else
+                            LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
+                        end
                     else
                         PlayerControls:Enable()
                         if (tick() - Start >= (Forsaken.HitboxesDuration+.2)) then
@@ -7071,7 +7438,7 @@ function Counter(KillerModel, Root, track)
                     while tick() - s <= 1 do
                         stareFunc(KillerModel)
                         LocalPlayer.Character.Humanoid:MoveTo(KillerModel.HumanoidRootPart.Position)
-                        if R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.CriticalPunch) or DefaultGuest.Sounds.CriticalPunch) or R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.Parry) or DefaultGuest.Sounds.Parry) then
+                        if R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.CriticalPunch) and GuestInfo.Sounds.CriticalPunch or DefaultGuest.Sounds.CriticalPunch) or R:FindFirstChild((GuestInfo.Sounds and GuestInfo.Sounds.Parry) or DefaultGuest.Sounds.Parry) then
                             if Catsaken.Flags.AutoBlockNotifications.CurrentValue then
                                 Rayfield:Notify({Title = 'Auto Punch', Content = 'Successful Punch', Duration = 7, Image = 'flame'})
                             end
@@ -7326,17 +7693,24 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
         end
         if (table.find(Forsaken.WalkspeedOverrideEndedAnims, track.Animation.AnimationId)) then
             Forsaken.UsingWalkspeedOverride = false
+            Forsaken.LungingWalkspeedOverride = false
             warn("ws stopped")
+        end
+        if (table.find(Forsaken.WalkspeedOverrideLoopAnims, track.Animation.AnimationId)) then
+            Forsaken.LungingWalkspeedOverride = true
+            warn("ws lunge")
         end
         task.spawn(function()
             if Catsaken.Flags.RevealTrajectory.CurrentValue then
-                if (AttackName == 'MassInfection' or AttackName == 'Entanglement' or AttackName == 'UppercutPullingLoop' or AttackName == 'Enstrangle' or iswso) then
+                if (AttackName == 'MassInfection' or AttackName == 'Entanglement' or AttackName == 'CorruptEnergy' or AttackName == 'UppercutPullingLoop' or AttackName == 'Enstrangle' or iswso) then
                     local Box = Instance.new("Part", workspace)
                     Box.Anchored = true
                     Box.CanCollide = false
                     Box.Transparency = 0.7
                     Box.Material = Enum.Material.Neon
                     Box.Color = Color3.fromRGB(255, 0, 0)
+                    local lastPos = Char.HumanoidRootPart.Position
+                    local lastUnit = Char.HumanoidRootPart.CFrame.LookVector
                     while track.IsPlaying or Forsaken.UsingWalkspeedOverride do
                         local front = 1000
                         local left, right, back = 6, 6, 0
@@ -7346,16 +7720,26 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
                         if (iswso) then
                             left, right = 4, 4
                         end
-                        Box.CFrame = Char.HumanoidRootPart.CFrame * CFrame.new((right - left) / 2, 0, -(front - back) / 2)
-                        Box.Size = Vector3.new(left + right, 10, front + back)
-                        if (iswso) then
+
+                        local currentPos = Char.HumanoidRootPart.Position
+                        local delta = currentPos - lastPos
+                        local unit = delta.Magnitude > 0.01 and delta.Unit or lastUnit
+                        lastUnit = unit
+                        lastPos = currentPos
+
+                        if (iswso and Forsaken.LungingWalkspeedOverride) then
+                            local lookCFrame = CFrame.new(currentPos, currentPos + unit)
+                            Box.CFrame = lookCFrame * CFrame.new((right - left) / 2, 0, -(front - back) / 2)
+                            Box.Size = Vector3.new(left + right, 10, front + back)
+                        else
+                            Box.CFrame = Char.HumanoidRootPart.CFrame * CFrame.new((right - left) / 2, 0, -(front - back) / 2)
+                            Box.Size = Vector3.new(left + right, 10, front + back)
+                        end
+                        if (iswso and not Forsaken.UsingWalkspeedOverride) then
                             break
                         end
                         RunService.RenderStepped:Wait()
                     end
-                    TweenService:Create(Box, TweenInfo.new(2, Enum.EasingStyle.Linear), {Transparency = 1})
-                    task.wait(2)
-                    Box:Destroy()
                 end
             end
         end)
@@ -7381,11 +7765,18 @@ function TrackAnimations(Char,IsSurvivor,IsNew)
         end)
         if (KillerModel ~= nil and Char == KillerModel) then
             local canBlock = true
+            if not table.find(Forsaken.M1Animations, track.Animation.AnimationId) then
+                canBlock = false
+            end
             if (AttackName == 'Entanglement' and not Catsaken.Flags.AutoBlockEntanglement.CurrentValue) then
                 canBlock = false
+            elseif (AttackName == 'Entanglement') then
+                canBlock = true
             end
             if (AttackName == 'CorruptNature' and not Catsaken.Flags.AutoBlockNature.CurrentValue) then
                 canBlock = false
+            elseif (AttackName == 'CorruptNature') then
+                canBlock = true
             end
             if (canBlock) then
                 if (HasAbilityReady("Block") and (not IsKiller()) and Catsaken.Flags.AutoBlockToggle.CurrentValue) then
@@ -7835,6 +8226,14 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateSection('Invisibility')
 
+local oldIsOnScreen
+oldIsOnScreen = hookfunction(Util.IsOnScreen, newcclosure(function(...)
+    if (Catsaken.Flags.ProtectionBreakWall.CurrentValue) then
+        return true
+    end
+    return oldIsOnScreen(...)
+end))
+
 local oldFireserver
 oldFireserver = hookfunction(NetworkModule.FireServerConnection, newcclosure(function(self, ...)
     if Unloaded then return oldFireserver(self, ...) end
@@ -7842,7 +8241,7 @@ oldFireserver = hookfunction(NetworkModule.FireServerConnection, newcclosure(fun
     if args[1] == 'UpdateCharacterPosition' and Forsaken.Desynced then
         return
     end
-    if args[1] == 'DusekkarCancel' and Catsaken.Flags.ProtectionBreakWall.CurrentValue then
+    if args[1] == (LocalPlayer.Name .. 'DusekkarCancel') and (Catsaken.Flags.ProtectionBreakWall.CurrentValue or Catsaken.Flags.ProtectionBreak.CurrentValue) then
         return
     end
     if (Catsaken.Flags.DemonicPursuitAntiCrash.CurrentValue and args[1] == (LocalPlayer.Name .. '666Crashed') and Forsaken.PursuitTracker) then
@@ -8596,7 +8995,7 @@ end
             end,reason='illegal jump'},
             ['STAMINA'] = {flag='ANTICHEAT_DETECTSTAMINA', detect=function(plr)
                 local IsSprinting = plr.Character:GetAttribute("sprinting")
-                local Stamina = plr.Character:GetAttribute("estimatedStamina") and plr.Character:GetAttribute("estimatedStamina") * 1.4
+                local Stamina = plr.Character:GetAttribute("estimatedStamina") and plr.Character:GetAttribute("estimatedStamina") * 2.2
                 -- inflate stamina so much that if they are possibly sprinting by the time its estimated 0, they are cheating
                 if not Stamina then return end
                 if not plr.Character:GetAttribute("STAMINA_FLAGS") then
@@ -8604,7 +9003,7 @@ end
                 end
                 local flaggedbefore = plr.Character:GetAttribute("STAMINA_FLAG_TIME")
                 if IsSprinting and Stamina <= 0 then
-                    if (flaggedbefore and tick() - flaggedbefore >= 3) or not flaggedbefore then
+                    if (flaggedbefore and tick() - flaggedbefore >= 4) or not flaggedbefore then
                         warn("[Anticheat]", plr.Name, "flagged for stamina modifications")
                         plr.Character:SetAttribute("STAMINA_FLAGS", plr.Character:GetAttribute("STAMINA_FLAGS") + 1)
                         plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
@@ -8613,12 +9012,12 @@ end
                         plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
                     end
                     flaggedbefore = plr.Character:GetAttribute("STAMINA_FLAG_TIME")
-                    if tick() - flaggedbefore >= 30 and plr.Character:GetAttribute("STAMINA_FLAGS") > 0 then
+                    if tick() - flaggedbefore >= 41 and plr.Character:GetAttribute("STAMINA_FLAGS") > 0 then
                         warn("[Anticheat] Removing stamina flag from", plr.Name, "for being a good boy")
                         plr.Character:SetAttribute("STAMINA_FLAGS", plr.Character:GetAttribute("STAMINA_FLAGS") - 1)
                         plr.Character:SetAttribute("STAMINA_FLAG_TIME", tick())
                     end
-                    if plr.Character:GetAttribute("STAMINA_FLAGS") > 4 then
+                    if plr.Character:GetAttribute("STAMINA_FLAGS") > 7 then
                         return true
                     end
                 end
@@ -9328,7 +9727,7 @@ function cfgmanager()
 
     if identifyexecutor() == 'Delta' then
         ConfigsTab:CreateButton({
-            Name = 'Share Current Settings ⭐',
+            Name = 'Share Current Settings',
             Callback = function()
                 Env.MobileToggle:deselect()
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/config.lua"))()
@@ -9336,7 +9735,7 @@ function cfgmanager()
         })
 
         ConfigsTab:CreateButton({
-            Name = 'Search For Configs ⭐',
+            Name = 'Search For Configs',
             Callback = function()
                 Env.MobileToggle:deselect()
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/jeevacation780/repository-for-kings/refs/heads/main/search.lua"))()
@@ -9469,7 +9868,7 @@ MiscTab:CreateInput({
         writefile("Catsaken/CustomLMSFile", text)
         if (text == '') then return end
         if (not isfile(text)) then
-            Rayfield:Notify({Title = 'Incorrect file', Content = '"' .. text .. '" is not an existing file', Duration = 8, Image = 'ban'})
+            Rayfield:Notify({Title = 'Incorrect file (lms changer)', Content = '"' .. text .. '" is not an existing file', Duration = 8, Image = 'ban'})
         elseif (not is) then
             Rayfield:Notify({Title = 'Found file', Content = 'File located in workspace. Please make sure to change the selected lms theme to Custom', Duration = 8, Image = 'check'})
         end
