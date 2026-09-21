@@ -10472,7 +10472,11 @@ xpcall(function()
                         end
                     end
 
+                    local start = tick()
                     local connection; connection = RunService.Heartbeat:Connect(function()
+                        if tick() - start >= 30 then
+                            connection:Disconnect()
+                        end
                         for _, item in ipairs(activeItems) do
                             if item and item.Parent and not item.Anchored then
                                 item.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
@@ -10482,8 +10486,6 @@ xpcall(function()
                             end
                         end
                     end)
-                    wait(60)
-                    connection:Disconnect()
                 else
                     Rayfield:Notify({Title = 'No', Content = 'There must be atleast 1 item on the ground, yet there are none, so it wont work'})
                 end
