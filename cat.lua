@@ -7100,7 +7100,7 @@ xpcall(function()
 
     SilentTab:CreateDropdown({
         Name = 'Ability to use silent aim',
-        Options = {'Plasma beam - Dusekkar', 'Void Star - Noli', 'Corrupt Nature - Coolkid', 'Enstrangle - Azure'},
+        Options = {'Plasma beam - Dusekkar', 'Void Star - Noli', 'Corrupt Nature - Coolkid'},
         CurrentOption = {},
         MultipleOptions = true,
         Flag = 'SilentAimValues',
