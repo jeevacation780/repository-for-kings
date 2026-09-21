@@ -10433,45 +10433,60 @@ xpcall(function()
             Name = 'Loop Random TP all players',
             ToolTip = 'An exploit that causes the entire round to get stuck with everyone teleporting into random positions. It also works when you are dead.',
             Callback = function()
-                local blur = Instance.new("BlurEffect", Lighting)
-                blur.Size = 999
-                local success = false
-                local i = 0
-                if pcall(function()
-                    i = i + 1
-                    Rayfield:Notify({Title = 'Loop TP (' .. i .. ')', Content = "Spoofing c00lgui", Duration = 10})
-                    local coke
-                    for i, v in pairs(workspace.Map:GetDescendants()) do
-                        if v:IsA('Tool') and v.Name == 'BloxyCola' and v.ItemRoot.Velocity.magnitude <= 4 then
-                            coke = v
-                            break
+                -- Ty curedsaken for improving my tp all! turns out we are best friends <3
+                local targetNames = {
+                    "BloxyCola",
+                    "Medkit"
+                }
+
+                local function isValidItem(obj)
+                    if obj:IsA("BasePart") and not obj.Anchored then
+                        for _, name in ipairs(targetNames) do
+                            if obj.Name:lower():find(name:lower()) then
+                                return true
+                            end
                         end
                     end
-                    if not coke then
-                        return blur:Destroy(), Rayfield:Notify({Title = 'It cannot be performed right now', Content = 'Try pressing it at an early stage of the round instead'})
-                    end
-                    coke = coke.ItemRoot
-                    if coke:FindFirstChild('ProximityPrompt') then
-                        coke:FindFirstChild('ProximityPrompt'):Destroy()
-                    end
-                    while not isnetworkowner(coke) do
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = coke.CFrame
-                        wait()
-                    end
-                    i = i + 1
-                    Rayfield:Notify({Title = 'Loop TP (' .. i .. ')', Content = "Parented c00lgui to localplayer", Duration = 10})
-                    i = i + 1
-                    Rayfield:Notify({Title = 'Loop TP (' .. i .. ')', Content = "Attempting to trigger c00lgui on all players ..."})
-                    success = true
-                    coke.Velocity = Vector3.new(99999, 99999, 99999)
-                end) then wait(1) end
-                if success then
-                    i = i + 1
-                    Rayfield:Notify({Title = 'Loop TP (' .. i .. ')', Content = "Removed c00lgui"})
+                    return false
                 end
-                i = i + 1
-                Rayfield:Notify({Title = 'Loop TP (' .. i .. ')', Content = "Cleaning up hooks"})
-                if blur.Parent then blur:Destroy() end
+
+                local itemsToTarget = {}
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if isValidItem(obj) then
+                        table.insert(itemsToTarget, obj)
+                    end
+                end
+
+                if #itemsToTarget > 0 then
+                    local character = LocalPlayer.Character
+                    if not character then return end
+                    local hrp = character:WaitForChild("HumanoidRootPart", 2)
+                    if not hrp then return end
+                    local activeItems = {}
+
+                    for _, item in ipairs(itemsToTarget) do
+                        if item and item.Parent and not item.Anchored then
+                            hrp.CFrame = item.CFrame * CFrame.new(0, 1.5, 0)
+                            task.wait(0.3)
+                            table.insert(activeItems, item)
+                        end
+                    end
+
+                    local connection; connection = RunService.Heartbeat:Connect(function()
+                        for _, item in ipairs(activeItems) do
+                            if item and item.Parent and not item.Anchored then
+                                item.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
+                                item.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+                            else
+                                connection:Disconnect()
+                            end
+                        end
+                    end)
+                    wait(60)
+                    connection:Disconnect()
+                else
+                    Rayfield:Notify({Title = 'No', Content = 'There must be atleast 1 item on the ground, yet there are none, so it wont work'})
+                end
             end
         })
     end
