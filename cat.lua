@@ -4534,40 +4534,6 @@ xpcall(function()
     local AboutTab = Catsaken:CreateTab('About', 'info')
     AboutTab:CreateSection('Contact')
     AboutTab:CreateLabel("discord.gg/rmneruazd")
-    local servercreatedate = 1789618980
-    local s, corddata = pcall(function()
-        return safehttpget("https://discord.com/api/v6/invite/rmneruazd")
-    end)
-    if s then
-        local data = HttpService:JSONDecode(corddata)
-        if data.profile then
-            local function formatDuration(seconds)
-                local units = {
-                    {"year", 31536000},
-                    {"month", 2592000},
-                    {"week", 604800},
-                    {"day", 86400},
-                    {"hour", 3600},
-                }
-                local parts = {}
-                for _, u in ipairs(units) do
-                    local amt = math.floor(seconds / u[2])
-                    if amt > 0 then
-                        seconds -= amt * u[2]
-                        table.insert(parts, amt .. " " .. u[1] .. (amt ~= 1 and "s" or ""))
-                    end
-                end
-                return table.concat(parts, " ")
-            end
-            local lb1 = AboutTab:CreateLabel('')
-            local lb2 = AboutTab:CreateLabel('')
-            task.spawn(function()
-                lb1:Set('Created ' .. formatDuration(os.time() - servercreatedate) .. ' ago')
-                lb2:Set(data.profile.member_count .. ' members, ' .. data.profile.online_count .. ' online')
-                wait(60)
-            end)
-        end
-    end
     AboutTab:CreateButton({
         Name = 'Copy invite',
         Callback = function()
