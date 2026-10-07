@@ -4533,55 +4533,11 @@ xpcall(function()
 
     local AboutTab = Catsaken:CreateTab('About', 'info')
     AboutTab:CreateSection('Contact')
-    AboutTab:CreateLabel("discord.gg/rmneruazd")
+    AboutTab:CreateLabel("Discord server: https://discord.gg/rmneruazd")
     AboutTab:CreateButton({
         Name = 'Copy invite',
         Callback = function()
             setclipboard('https://discord.gg/rmneruazd')
-        end
-    })
-    local UselessText = ""
-    local LastFeedback = 0
-    local SentFeedback = {}
-    AboutTab:CreateInput({
-        Name = 'Your Message',
-        CurrentValue = UselessText,
-        PlaceholderText = 'Empty',
-        RemoveTextAfterFocusLost = false,
-        Flag = 'FeedbackMessage',
-        Callback = function(Text)
-            UselessText = Text
-        end,
-        DontSave = true
-    })
-    AboutTab:CreateButton({
-        Name = 'SEND IT 📧',
-        Callback = function()
-            if LocalPlayer.UserId == 11500594477 then return end
-            if UselessText == "" then return end
-            if #UselessText <= 30 or #UselessText:split(" ") <= 4 then
-                return Rayfield:Notify({Title = 'Catsaken', Content = 'Message is not long enough.', Duration = 12, Image = 'ban'})
-            end
-            if SentFeedback[UselessText] then
-                return Rayfield:Notify({Title = 'Catsaken', Content = 'You already sent that message.', Duration = 12, Image = 'ban'})
-            end
-            if tick() - LastFeedback >= 60 then
-                SentFeedback[UselessText] = true
-                LastFeedback = tick()
-                http.request({
-                    Method = "POST",
-                    Url = "https://catsaken.chieokure.workers.dev/",
-                    Headers = {
-                        ['content-type'] = 'application/json'
-                    },
-                    Body = HttpService:JSONEncode({
-                        content = UselessText .. "\nDevice: " .. (IsMobile and "Mobile" or "PC") .. "\nExecutor: " .. identifyexecutor()
-                    })
-                })
-                Rayfield:Notify({Title = 'Catsaken', Content = 'Message sent. Note that I cant actually natively reply to your messages, but I will 100% read them quickly.', Duration = 12, Image = 'check'})
-            else
-                Rayfield:Notify({Title = 'Catsaken', Content = 'One message per minute.', Duration = 12, Image = 'ban'})
-            end
         end
     })
     AboutTab:CreateSection('Script Help')
